@@ -1,1 +1,2 @@
-java -cp .:lib/jbox2d-library-2.2.1.1.jar:lib/flatlaf-2.1.jar ponts.Main
+#!/bin/sh
+java -cp .:lib/jbox2d-library-2.2.1.1.jar:lib/flatlaf-2.1.jar bridge.Main

@@ -1,4 +1,4 @@
-package ponts.ihm;
+package bridge.ui;
 
 import java.awt.Dimension;
 import java.awt.DisplayMode;
@@ -15,68 +15,48 @@ import javax.swing.plaf.FontUIResource;
 import com.formdev.flatlaf.FlatLightLaf;
 
 /**
- * Classe de la fenêtre
+ * Main application window.
  */
-public class Fenetre extends JFrame {
+public class MainFrame extends JFrame {
 
-    private Jeu jeu;
-    private Editeur editeur;
-    private final int LARGEUR_MIN = 960;
-    private final int HAUTEUR_MIN = 540;
+    private GamePanel gamePanel;
+    private LevelEditor levelEditor;
+    private final int MIN_WIDTH = 960;
+    private final int MIN_HEIGHT = 540;
 
-    /**
-     * Constructeur d'une fenêtre
-     */
-    public Fenetre() {
-
+    public MainFrame() {
         setTitle("Bridges");
-        setMinimumSize(new Dimension(LARGEUR_MIN, HAUTEUR_MIN));
+        setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
         setExtendedState(MAXIMIZED_BOTH);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         int refreshRate = getRefreshRate();
         Box2D box2d = new Box2D(this);
 
-        jeu = new Jeu(this, box2d, refreshRate);
-        editeur = new Editeur(this, box2d, refreshRate);
-        lancerJeu();
+        gamePanel = new GamePanel(this, box2d, refreshRate);
+        levelEditor = new LevelEditor(this, box2d, refreshRate);
+        showGame();
         setVisible(true);
-        jeu.messageDebutJeu();
+        gamePanel.showWelcomeMessage();
     }
 
-    /**
-     * Lancer le jeu
-     */
-    public void lancerJeu() {
-        changerEcran(editeur, jeu);
-        jeu.majListeNiveaux();
-        jeu.verifierExistanceNiveaux();
+    public void showGame() {
+        swapScreen(levelEditor, gamePanel);
+        gamePanel.refreshLevelList();
+        gamePanel.checkLevelsPresent();
     }
 
-    /**
-     * Lancer l'éditeur
-     */
-    public void lancerEditeur() {
-        changerEcran(jeu, editeur);
+    public void showLevelEditor() {
+        swapScreen(gamePanel, levelEditor);
     }
 
-    /**
-     * Changer d'écran en passant du jeu à l'éditeur ou l'inverse
-     * 
-     * @param actuel
-     * @param nouveau
-     */
-    private void changerEcran(JPanel actuel, JPanel nouveau) {
-        remove(actuel);
-        add(nouveau);
-        nouveau.repaint();
+    private void swapScreen(JPanel current, JPanel next) {
+        remove(current);
+        add(next);
+        next.repaint();
         setVisible(true);
     }
 
-    /**
-     * Reccupere le taux de rafraichissement de l'écran pour faire des repaint aux
-     * bons moments et avoir le meilleur framerate
-     */
     private int getRefreshRate() {
         try {
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -87,30 +67,23 @@ public class Fenetre extends JFrame {
             e.printStackTrace();
             return 60;
         }
-
     }
 
-    /**
-     * Modifications de l'apparence des composants Swing
-     */
     public static void setLookAndFeel() {
-        FlatLightLaf.setup(); // Initialise la librairie flatlaf
+        FlatLightLaf.setup();
 
-        // Coins arrondis
-        int arrondi = 20;
-        UIManager.put("Button.arc", arrondi);
-        UIManager.put("Component.arc", arrondi);
-        UIManager.put("TextComponent.arc", arrondi);
+        int arc = 20;
+        UIManager.put("Button.arc", arc);
+        UIManager.put("Component.arc", arc);
+        UIManager.put("TextComponent.arc", arc);
 
-        // Marges
-        int marge = 8;
-        Insets insets = new Insets(marge, marge, marge, marge);
+        int margin = 8;
+        Insets insets = new Insets(margin, margin, margin, margin);
         UIManager.put("Button.margin", insets);
         UIManager.put("TextField.margin", insets);
         UIManager.put("TextComponent.margin", insets);
         UIManager.put("ComboBox.padding", insets);
 
-        // Taille des polices d'écriture
         Font defaultFont = UIManager.getDefaults().getFont("Label.font");
         Font font = defaultFont.deriveFont(18f);
         Font fontBold = font.deriveFont(Font.BOLD);
@@ -120,7 +93,6 @@ public class Fenetre extends JFrame {
         UIManager.put("Button.font", fontResource);
         UIManager.put("ComboBox.font", fontResource);
         UIManager.put("TextField.font", fontResource);
-
     }
 
 }
