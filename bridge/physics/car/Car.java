@@ -44,6 +44,10 @@ public class Car {
         frontWheel.attachToCar(world, body);
     }
 
+    public float getRearWheelX() {
+        return rearWheel.getX();
+    }
+
     public void draw(Graphics g, Box2D box2d) {
         body.draw(g, box2d);
         rearWheel.draw(g, box2d);

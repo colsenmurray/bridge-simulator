@@ -31,6 +31,8 @@ public class Level implements Serializable {
 
     public static final Path LEVELS_PATH = Paths.get("res", "niveaux");
     private static final long serialVersionUID = 5014471600563766405L;
+    /** If anchor list is empty or min/max x are too close, span falls back to car start/finish. */
+    private static final float ANCHOR_SPAN_EPS = 1e-4f;
 
     /**
      * Field names must match legacy {@code ponts.niveau.Niveau} for Java serialization compatibility.
@@ -232,6 +234,50 @@ public class Level implements Serializable {
 
     public float computeCarFinishX() {
         return posCoins.get(posCoins.size() - 3).x;
+    }
+
+    /**
+     * Left bound for progress along the level: min anchor x, or car terrain span if anchors missing/degenerate.
+     */
+    public float getAnchorSpanMinX() {
+        float min = Float.POSITIVE_INFINITY;
+        float max = Float.NEGATIVE_INFINITY;
+        for (Vec2 p : posLiaisons) {
+            if (p.x < min) {
+                min = p.x;
+            }
+            if (p.x > max) {
+                max = p.x;
+            }
+        }
+        if (posLiaisons.isEmpty() || max - min < ANCHOR_SPAN_EPS) {
+            float a = computeCarStartX();
+            float b = computeCarFinishX();
+            return Math.min(a, b);
+        }
+        return min;
+    }
+
+    /**
+     * Right bound for progress along the level: max anchor x, or car terrain span if anchors missing/degenerate.
+     */
+    public float getAnchorSpanMaxX() {
+        float min = Float.POSITIVE_INFINITY;
+        float max = Float.NEGATIVE_INFINITY;
+        for (Vec2 p : posLiaisons) {
+            if (p.x < min) {
+                min = p.x;
+            }
+            if (p.x > max) {
+                max = p.x;
+            }
+        }
+        if (posLiaisons.isEmpty() || max - min < ANCHOR_SPAN_EPS) {
+            float a = computeCarStartX();
+            float b = computeCarFinishX();
+            return Math.max(a, b);
+        }
+        return max;
     }
 
 }

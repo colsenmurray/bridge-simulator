@@ -1,6 +1,9 @@
 package bridge.physics;
 
 import java.awt.Graphics2D;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.World;
@@ -10,6 +13,7 @@ import bridge.physics.beams.Material;
 import bridge.physics.car.Car;
 import bridge.model.BridgeTopology;
 import bridge.save.BridgeSaveFile;
+import bridge.save.SimulationRunJson;
 import bridge.physics.environment.RiverBank;
 import bridge.ui.Box2D;
 import bridge.ui.GamePanel;
@@ -31,6 +35,12 @@ public class GameSession {
     private boolean bridgeBuilding = true;
     private boolean finished = false;
     private Material material = Material.ASPHALT;
+
+    private static final float PROGRESS_SPAN_EPS = 1e-5f;
+
+    private float simTime;
+    private boolean recordingEnabled;
+    private final ArrayList<SimulationRunJson.Sample> recordingSamples = new ArrayList<>();
 
     public GameSession(GamePanel gamePanel, Box2D box2d, Level level) {
         this.gamePanel = gamePanel;
@@ -107,19 +117,6 @@ public class GameSession {
         car.draw(g, box2d);
     }
 
-    public void tickPhysics(Vec2 mousePos, int mouseButton, boolean mouseClicked, float dt) {
-        if (physicsRunning) {
-            world.step(dt, 10, 8);
-            bridge.testBreak(world, dt);
-            car.stopIfNeeded();
-            if (!finished && car.testReachedFinish()) {
-                endSession();
-            }
-        } else if (bridgeBuilding) {
-            bridge.handleInput(world, mousePos, mouseButton, mouseClicked, material, riverBank);
-        }
-    }
-
     private void endSession() {
         boolean success = getTotalPrice() <= getBudget();
         gamePanel.onSessionEnd(success, getTotalPrice());
@@ -137,6 +134,69 @@ public class GameSession {
 
     public int getBudget() {
         return budget;
+    }
+
+    public float getSimTime() {
+        return simTime;
+    }
+
+    public void setRecordingEnabled(boolean recordingEnabled) {
+        this.recordingEnabled = recordingEnabled;
+    }
+
+    public boolean isRecordingEnabled() {
+        return recordingEnabled;
+    }
+
+    public void clearRecording() {
+        recordingSamples.clear();
+    }
+
+    public boolean hasRecordingSamples() {
+        return !recordingSamples.isEmpty();
+    }
+
+    public List<SimulationRunJson.Sample> getRecordingSamples() {
+        return Collections.unmodifiableList(recordingSamples);
+    }
+
+    /**
+     * Rear wheel progress in [0,1] along {@link Level#getAnchorSpanMinX()} … {@link Level#getAnchorSpanMaxX()}.
+     */
+    public float getCurrentAnchorProgress() {
+        float min = level.getAnchorSpanMinX();
+        float max = level.getAnchorSpanMaxX();
+        float span = max - min;
+        float x = car.getRearWheelX();
+        if (span <= PROGRESS_SPAN_EPS) {
+            return 0.5f;
+        }
+        float p = (x - min) / span;
+        if (p < 0f) {
+            return 0f;
+        }
+        if (p > 1f) {
+            return 1f;
+        }
+        return p;
+    }
+
+    public void tickPhysics(Vec2 mousePos, int mouseButton, boolean mouseClicked, float dt) {
+        if (physicsRunning) {
+            world.step(dt, 10, 8);
+            bridge.testBreak(world, dt);
+            car.stopIfNeeded();
+            simTime += dt;
+            if (recordingEnabled) {
+                recordingSamples.add(new SimulationRunJson.Sample(simTime, getCurrentAnchorProgress(),
+                        car.getRearWheelX(), dt));
+            }
+            if (!finished && car.testReachedFinish()) {
+                endSession();
+            }
+        } else if (bridgeBuilding) {
+            bridge.handleInput(world, mousePos, mouseButton, mouseClicked, material, riverBank);
+        }
     }
 
 }

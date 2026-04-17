@@ -20,6 +20,7 @@ import java.util.Map;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -35,6 +36,7 @@ import bridge.physics.beams.Material;
 import bridge.save.BridgeJson;
 import bridge.save.BridgeSaveFile;
 import bridge.save.LevelFingerprint;
+import bridge.save.SimulationRunJson;
 
 /**
  * Main game / simulation panel.
@@ -42,6 +44,7 @@ import bridge.save.LevelFingerprint;
 public class GamePanel extends JPanel implements ActionListener, MouseInputListener {
 
     private static final Path BRIDGES_DIR = Paths.get("res", "bridges");
+    private static final Path SIMULATIONS_DIR = Paths.get("res", "simulations");
 
     private MainFrame mainFrame;
     private Box2D box2d;
@@ -69,6 +72,8 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
     private JButton editorButton;
     private JButton saveBridgeButton;
     private JButton loadBridgeButton;
+    private JCheckBox recordRunCheckBox;
+    private JButton saveSimulationRunButton;
     private JLabel priceLabel;
     private JLabel budgetLabel;
     private JLabel bestLabel;
@@ -171,6 +176,16 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
         loadBridgeButton.setToolTipText("Pick a saved bridge from res/bridges/");
         loadBridgeButton.addActionListener(this);
         bridgeFileRow.add(loadBridgeButton);
+        JPanel simRecordRow = new RowPanel();
+        bridgeFileColumn.add(simRecordRow);
+        recordRunCheckBox = new JCheckBox("Record run");
+        recordRunCheckBox.setToolTipText("While the simulation runs, record time and car progress (rear wheel) along anchor span");
+        recordRunCheckBox.addActionListener(this);
+        simRecordRow.add(recordRunCheckBox);
+        saveSimulationRunButton = new JButton("Save run…");
+        saveSimulationRunButton.setToolTipText("Export recorded samples to res/simulations/<name>.json");
+        saveSimulationRunButton.addActionListener(this);
+        simRecordRow.add(saveSimulationRunButton);
 
         JPanel bottomRow = new RowPanel(box2d.getPixelWidth() / 20, box2d.getPixelHeight() / 50);
         this.add(bottomRow, BorderLayout.PAGE_END);
@@ -290,6 +305,14 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
         if (source == loadBridgeButton) {
             loadBridgeFromSidecar();
         }
+        if (source == recordRunCheckBox) {
+            if (session != null) {
+                session.setRecordingEnabled(recordRunCheckBox.isSelected());
+            }
+        }
+        if (source == saveSimulationRunButton) {
+            saveSimulationRunToFile();
+        }
     }
 
     /**
@@ -333,6 +356,45 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
 
     private Path pathForBridgeName(String stem) {
         return BRIDGES_DIR.resolve(sanitizeBridgeFileName(stem) + ".json");
+    }
+
+    private Path pathForSimulationRunName(String stem) {
+        return SIMULATIONS_DIR.resolve(sanitizeBridgeFileName(stem) + ".json");
+    }
+
+    private void saveSimulationRunToFile() {
+        if (session == null) {
+            return;
+        }
+        if (!session.hasRecordingSamples()) {
+            JOptionPane.showMessageDialog(mainFrame,
+                    "No samples recorded. Enable \"Record run\" and run the simulation to collect data.",
+                    "Save run",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String level = getSelectedLevelName();
+        String suggested = level != null && !level.isEmpty() ? sanitizeBridgeFileName(level) + "_run" : "run";
+        Object input = JOptionPane.showInputDialog(mainFrame,
+                "Run file name (saved as res/simulations/<name>.json):",
+                "Save run",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                null,
+                suggested);
+        if (input == null) {
+            return;
+        }
+        Path path = pathForSimulationRunName(input.toString());
+        try {
+            Level lev = session.getLevel();
+            SimulationRunJson.writeFile(path, level, lev.getAnchorSpanMinX(), lev.getAnchorSpanMaxX(),
+                    session.getRecordingSamples());
+            JOptionPane.showMessageDialog(mainFrame, "Saved:\n" + path.toAbsolutePath(), "Save run",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(mainFrame, ex.getMessage(), "Save run", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void saveBridgeToSidecar() {
@@ -476,18 +538,7 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
         resetPhysicsClock();
     }
 
-    public void showWelcomeMessage() {
-        String text = "Welcome to our bridge game!";
-        text += "\n\n" + "You can build your bridge by clicking on connections (the circles).";
-        text += "\n" + "Choose the material carefully based on its properties and price.";
-        text += "\n" + "When you're ready, launch the simulation by clicking the ";
-        text += runPauseButton.getText() + ".";
-        text += "\n\n" + "The level will be successful if the car reaches the other side";
-        text += "\n" + "and if the bridge price is less than the budget.";
-        text += "\n\n" + "Good luck!";
-        JOptionPane.showMessageDialog(mainFrame, text, "Tutorial", JOptionPane.PLAIN_MESSAGE);
-    }
-
+    
     private void showEndMessage(boolean success) {
         String text = "";
         String title = "";
@@ -531,8 +582,14 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
         Level level = loadSelectedLevel();
         if (level != null) {
             session = new GameSession(this, box2d, level);
+            recordRunCheckBox.setSelected(false);
+            recordRunCheckBox.setEnabled(true);
+            saveSimulationRunButton.setEnabled(true);
         } else {
             session = null;
+            recordRunCheckBox.setSelected(false);
+            recordRunCheckBox.setEnabled(false);
+            saveSimulationRunButton.setEnabled(false);
         }
     }
 

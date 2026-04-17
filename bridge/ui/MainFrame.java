@@ -37,7 +37,7 @@ public class MainFrame extends JFrame {
         levelEditor = new LevelEditor(this, box2d, refreshRate);
         showGame();
         setVisible(true);
-        gamePanel.showWelcomeMessage();
+
     }
 
     public void showGame() {
