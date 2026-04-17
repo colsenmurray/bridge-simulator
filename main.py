@@ -12,7 +12,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     with open(args.config_file, 'r') as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
+        config = GAConfig.load_from_yaml(f)
 
     config = GAConfig(**config)
 
