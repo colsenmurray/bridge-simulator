@@ -10,6 +10,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +32,9 @@ import org.jbox2d.common.Vec2;
 import bridge.level.Level;
 import bridge.physics.GameSession;
 import bridge.physics.beams.Material;
+import bridge.save.BridgeJson;
+import bridge.save.BridgeSaveFile;
+import bridge.save.LevelFingerprint;
 
 /**
  * Main game / simulation panel.
@@ -58,6 +65,8 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
     private JButton runPauseButton;
     private JButton restartButton;
     private JButton editorButton;
+    private JButton saveBridgeButton;
+    private JButton loadBridgeButton;
     private JLabel priceLabel;
     private JLabel budgetLabel;
     private JLabel bestLabel;
@@ -145,6 +154,21 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
         editorButton = new JButton("Edit a Level");
         editorButton.addActionListener(this);
         editorRow.add(editorButton);
+
+        JPanel bridgeFileColumn = new ColumnPanel();
+        topRow.add(bridgeFileColumn);
+        JLabel bridgeFileHeader = new JLabel("Bridge file");
+        bridgeFileColumn.add(bridgeFileHeader);
+        JPanel bridgeFileRow = new RowPanel();
+        bridgeFileColumn.add(bridgeFileRow);
+        saveBridgeButton = new JButton("Save bridge");
+        saveBridgeButton.setToolTipText("Save bridge to res/bridges/<level>.json (only while simulation is not running)");
+        saveBridgeButton.addActionListener(this);
+        bridgeFileRow.add(saveBridgeButton);
+        loadBridgeButton = new JButton("Load bridge");
+        loadBridgeButton.setToolTipText("Load bridge from res/bridges/<level>.json");
+        loadBridgeButton.addActionListener(this);
+        bridgeFileRow.add(loadBridgeButton);
 
         JPanel bottomRow = new RowPanel(box2d.getPixelWidth() / 20, box2d.getPixelHeight() / 50);
         this.add(bottomRow, BorderLayout.PAGE_END);
@@ -256,6 +280,86 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
                 updateSimulationButton();
             }
             mainFrame.showLevelEditor();
+        }
+
+        if (source == saveBridgeButton) {
+            saveBridgeToSidecar();
+        }
+        if (source == loadBridgeButton) {
+            loadBridgeFromSidecar();
+        }
+    }
+
+    private Path bridgeSidecarPath() {
+        String name = getSelectedLevelName();
+        if (name == null || name.isEmpty()) {
+            return null;
+        }
+        return Paths.get("res", "bridges", name + ".json");
+    }
+
+    private void saveBridgeToSidecar() {
+        if (session == null) {
+            return;
+        }
+        if (!session.canSaveOrLoadBridge()) {
+            JOptionPane.showMessageDialog(mainFrame,
+                    "Stop the simulation before saving the bridge (pause or stay in build mode).",
+                    "Save bridge", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        Path path = bridgeSidecarPath();
+        if (path == null) {
+            return;
+        }
+        try {
+            BridgeSaveFile data = session.exportBridgeSave();
+            BridgeJson.writeFile(path, data);
+            JOptionPane.showMessageDialog(mainFrame, "Saved:\n" + path.toAbsolutePath(), "Save bridge",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(mainFrame, ex.getMessage(), "Save bridge", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void loadBridgeFromSidecar() {
+        if (session == null) {
+            return;
+        }
+        if (!session.canSaveOrLoadBridge()) {
+            JOptionPane.showMessageDialog(mainFrame,
+                    "Stop the simulation before loading a bridge.",
+                    "Load bridge", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        Path path = bridgeSidecarPath();
+        if (path == null) {
+            return;
+        }
+        if (!Files.isRegularFile(path)) {
+            JOptionPane.showMessageDialog(mainFrame, "No saved bridge file:\n" + path.toAbsolutePath(),
+                    "Load bridge", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        try {
+            BridgeSaveFile data = BridgeJson.readFile(path, session.getLevel());
+            String expected = LevelFingerprint.compute(session.getLevel());
+            if (data.getLevelFingerprint() != null && !data.getLevelFingerprint().equals(expected)) {
+                int r = JOptionPane.showConfirmDialog(mainFrame,
+                        "This file was saved for a different level geometry (fingerprint mismatch).\n"
+                                + "Continue anyway?",
+                        "Load bridge", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (r != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            }
+            session.applyBridgeSave(data);
+            runPauseButton.setText("Start");
+            repaint();
+            JOptionPane.showMessageDialog(mainFrame, "Bridge loaded from:\n" + path.toAbsolutePath(),
+                    "Load bridge", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException | IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(mainFrame, ex.getMessage(), "Load bridge", JOptionPane.ERROR_MESSAGE);
         }
     }
 

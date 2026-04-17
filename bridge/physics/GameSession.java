@@ -8,6 +8,8 @@ import org.jbox2d.dynamics.World;
 import bridge.level.Level;
 import bridge.physics.beams.Material;
 import bridge.physics.car.Car;
+import bridge.model.BridgeTopology;
+import bridge.save.BridgeSaveFile;
 import bridge.physics.environment.RiverBank;
 import bridge.ui.Box2D;
 import bridge.ui.GamePanel;
@@ -18,6 +20,7 @@ import bridge.ui.GamePanel;
 public class GameSession {
 
     private GamePanel gamePanel;
+    private Level level;
     private World world;
     private Bridge bridge;
     private RiverBank riverBank;
@@ -31,6 +34,7 @@ public class GameSession {
 
     public GameSession(GamePanel gamePanel, Box2D box2d, Level level) {
         this.gamePanel = gamePanel;
+        this.level = level;
 
         level.centerInView(box2d);
         level.addBoundaryPoints(box2d);
@@ -42,6 +46,43 @@ public class GameSession {
         bridge = new Bridge(world, level);
         car = new Car(world, level);
         budget = level.getBudget();
+    }
+
+    public Level getLevel() {
+        return level;
+    }
+
+    /**
+     * Bridge save/load is only allowed while simulation is not stepping (not mid-physics).
+     */
+    public boolean canSaveOrLoadBridge() {
+        return !physicsRunning;
+    }
+
+    public BridgeSaveFile exportBridgeSave() {
+        bridge.stopCreation(world);
+        return bridge.exportSnapshot(level);
+    }
+
+    public void applyBridgeSave(BridgeSaveFile save) {
+        bridge.applyFromSave(world, level, save);
+        physicsRunning = false;
+        bridgeBuilding = true;
+    }
+
+    /**
+     * Logical joint/edge graph for genetic algorithms (mutate free joints, then
+     * {@link #applyBridgeTopology(BridgeTopology)}).
+     */
+    public BridgeTopology exportBridgeTopology() {
+        bridge.stopCreation(world);
+        return bridge.exportTopology(level);
+    }
+
+    public void applyBridgeTopology(BridgeTopology topology) {
+        bridge.applyTopology(world, level, topology);
+        physicsRunning = false;
+        bridgeBuilding = true;
     }
 
     public boolean isPhysicsRunning() {
