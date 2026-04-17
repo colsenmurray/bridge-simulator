@@ -1,0 +1,13 @@
+{
+  "format": "bridge-simulator-bridge",
+  "version": 2,
+  "levelFingerprint": "eb8f1fcdd9ae80ea23c3141c134f6f4acb3d3a154240d76a80c19f3a0c7e9930",
+  "cost": 0,
+  "joints": [
+    { "x": 39.34375, "y": 30.0, "fixed": true },
+    { "x": 51.15625, "y": 25.9375, "fixed": true },
+    { "x": 60.84375, "y": 31.25, "fixed": true }
+  ],
+  "edges": [
+  ]
+}

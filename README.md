@@ -46,7 +46,7 @@ Bridge designs are stored as JSON under `res/bridges/`.
 - **Save bridge** — Only works while the simulation is **paused** (or before you have started it). You are prompted for a file name; invalid characters are sanitized and the file is written as `res/bridges/<name>.json`.
 - **Load bridge** — Also requires the simulation to be stopped. A dialog lists existing `.json` files in `res/bridges/`. If the file was saved for a different level shape than the one you have open, the game warns you before loading.
 
-The save format stores **joints** (world `x`, `y`, and whether the joint is **fixed** to the terrain) and **edges** (which joints they connect and **material**: asphalt, wood, or steel). A level fingerprint may be included so the game can detect mismatched levels.
+The save format stores **joints** (world `x`, `y`, and whether the joint is **fixed** to the terrain) and **edges** (which joints they connect and **material**: asphalt, wood, or steel). It may include **`cost`** (total bridge price in dollars at save time). A level fingerprint may be included so the game can detect mismatched levels.
 
 ## Recording a simulation run
 

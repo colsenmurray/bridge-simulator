@@ -29,6 +29,7 @@ public final class BridgeJson {
 
     private static final Pattern VERSION_PATTERN = Pattern.compile("\"version\"\\s*:\\s*(\\d+)");
     private static final Pattern FINGERPRINT_PATTERN = Pattern.compile("\"levelFingerprint\"\\s*:\\s*\"([^\"]*)\"");
+    private static final Pattern COST_PATTERN = Pattern.compile("\"cost\"\\s*:\\s*(\\d+)");
     /** Legacy beam-based records */
     private static final Pattern BEAM_PATTERN = Pattern.compile(
             "\"material\"\\s*:\\s*\"(ASPHALT|WOOD|STEEL)\"\\s*,\\s*"
@@ -51,6 +52,9 @@ public final class BridgeJson {
         sb.append("  \"version\": ").append(FORMAT_VERSION_JOINT_EDGE).append(",\n");
         if (file.getLevelFingerprint() != null) {
             sb.append("  \"levelFingerprint\": \"").append(escape(file.getLevelFingerprint())).append("\",\n");
+        }
+        if (file.getCost() != null) {
+            sb.append("  \"cost\": ").append(file.getCost()).append(",\n");
         }
         BridgeTopology t = file.getTopology();
         sb.append("  \"joints\": [\n");
@@ -103,10 +107,15 @@ public final class BridgeJson {
         if (fp.find()) {
             fingerprint = fp.group(1);
         }
-        if (json.contains("\"joints\"")) {
-            return parseJointEdgeFormat(version, fingerprint, json);
+        Integer cost = null;
+        Matcher cm = COST_PATTERN.matcher(json);
+        if (cm.find()) {
+            cost = Integer.parseInt(cm.group(1));
         }
-        return parseLegacyBeamFormat(version, fingerprint, json, levelForLegacy);
+        if (json.contains("\"joints\"")) {
+            return parseJointEdgeFormat(version, fingerprint, cost, json);
+        }
+        return parseLegacyBeamFormat(version, fingerprint, cost, json, levelForLegacy);
     }
 
     public static BridgeSaveFile readFile(Path path, Level levelForLegacy) throws IOException {
@@ -114,7 +123,7 @@ public final class BridgeJson {
         return parse(text, levelForLegacy);
     }
 
-    private static BridgeSaveFile parseJointEdgeFormat(int version, String fingerprint, String json)
+    private static BridgeSaveFile parseJointEdgeFormat(int version, String fingerprint, Integer cost, String json)
             throws IOException {
         String jointsInner = extractArrayContent(json, "joints");
         String edgesInner = extractArrayContent(json, "edges");
@@ -160,7 +169,7 @@ public final class BridgeJson {
             }
         }
         BridgeTopology topology = new BridgeTopology(joints, fixed, edges);
-        return new BridgeSaveFile(version, fingerprint, topology);
+        return new BridgeSaveFile(version, fingerprint, topology, cost);
     }
 
     /**
@@ -190,7 +199,8 @@ public final class BridgeJson {
         return null;
     }
 
-    private static BridgeSaveFile parseLegacyBeamFormat(int version, String fingerprint, String json, Level levelForLegacy)
+    private static BridgeSaveFile parseLegacyBeamFormat(int version, String fingerprint, Integer cost, String json,
+            Level levelForLegacy)
             throws IOException {
         List<BeamRecord> beams = new ArrayList<>();
         Matcher bm = BEAM_PATTERN.matcher(json);
@@ -207,7 +217,7 @@ public final class BridgeJson {
             }
         }
         BridgeTopology topology = BridgeTopology.fromBeamRecords(beams, levelForLegacy);
-        return new BridgeSaveFile(version, fingerprint, topology);
+        return new BridgeSaveFile(version, fingerprint, topology, cost);
     }
 
     public static void writeFile(Path path, BridgeSaveFile file) throws IOException {

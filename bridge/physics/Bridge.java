@@ -310,7 +310,7 @@ public class Bridge implements Serializable {
      */
     public BridgeSaveFile exportSnapshot(Level level) {
         return new BridgeSaveFile(BridgeJson.FORMAT_VERSION_JOINT_EDGE, LevelFingerprint.compute(level),
-                exportTopology(level));
+                exportTopology(level), getTotalPrice());
     }
 
     private static Material materialOf(Beam beam) {
