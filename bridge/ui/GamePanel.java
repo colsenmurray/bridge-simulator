@@ -41,6 +41,8 @@ import bridge.save.LevelFingerprint;
  */
 public class GamePanel extends JPanel implements ActionListener, MouseInputListener {
 
+    private static final Path BRIDGES_DIR = Paths.get("res", "bridges");
+
     private MainFrame mainFrame;
     private Box2D box2d;
     private GameSession session;
@@ -162,11 +164,11 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
         JPanel bridgeFileRow = new RowPanel();
         bridgeFileColumn.add(bridgeFileRow);
         saveBridgeButton = new JButton("Save bridge");
-        saveBridgeButton.setToolTipText("Save bridge to res/bridges/<level>.json (only while simulation is not running)");
+        saveBridgeButton.setToolTipText("Save bridge under a name in res/bridges/ (pause simulation first)");
         saveBridgeButton.addActionListener(this);
         bridgeFileRow.add(saveBridgeButton);
         loadBridgeButton = new JButton("Load bridge");
-        loadBridgeButton.setToolTipText("Load bridge from res/bridges/<level>.json");
+        loadBridgeButton.setToolTipText("Pick a saved bridge from res/bridges/");
         loadBridgeButton.addActionListener(this);
         bridgeFileRow.add(loadBridgeButton);
 
@@ -290,12 +292,47 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
         }
     }
 
-    private Path bridgeSidecarPath() {
-        String name = getSelectedLevelName();
-        if (name == null || name.isEmpty()) {
-            return null;
+    /**
+     * Sorted stems (no ".json") of files in {@code res/bridges}.
+     */
+    private String[] listSavedBridgeNames() {
+        File dir = BRIDGES_DIR.toFile();
+        if (!dir.isDirectory()) {
+            return new String[0];
         }
-        return Paths.get("res", "bridges", name + ".json");
+        String[] files = dir.list((d, name) -> name.toLowerCase().endsWith(".json"));
+        if (files == null || files.length == 0) {
+            return new String[0];
+        }
+        String[] stems = new String[files.length];
+        for (int i = 0; i < files.length; i++) {
+            String n = files[i];
+            stems[i] = n.substring(0, n.length() - ".json".length());
+        }
+        Arrays.sort(stems);
+        return stems;
+    }
+
+    private static String sanitizeBridgeFileName(String raw) {
+        if (raw == null) {
+            return "bridge";
+        }
+        String s = raw.trim();
+        if (s.toLowerCase().endsWith(".json")) {
+            s = s.substring(0, s.length() - ".json".length()).trim();
+        }
+        if (s.isEmpty()) {
+            return "bridge";
+        }
+        s = s.replaceAll("[^a-zA-Z0-9._-]", "_");
+        if (".".equals(s) || "..".equals(s)) {
+            return "bridge";
+        }
+        return s;
+    }
+
+    private Path pathForBridgeName(String stem) {
+        return BRIDGES_DIR.resolve(sanitizeBridgeFileName(stem) + ".json");
     }
 
     private void saveBridgeToSidecar() {
@@ -308,10 +345,19 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
                     "Save bridge", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        Path path = bridgeSidecarPath();
-        if (path == null) {
+        String level = getSelectedLevelName();
+        String suggested = level != null && !level.isEmpty() ? sanitizeBridgeFileName(level) : "bridge";
+        Object input = JOptionPane.showInputDialog(mainFrame,
+                "Bridge file name (saved as res/bridges/<name>.json):",
+                "Save bridge",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                null,
+                suggested);
+        if (input == null) {
             return;
         }
+        Path path = pathForBridgeName(input.toString());
         try {
             BridgeSaveFile data = session.exportBridgeSave();
             BridgeJson.writeFile(path, data);
@@ -332,12 +378,27 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
                     "Load bridge", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        Path path = bridgeSidecarPath();
-        if (path == null) {
+        String[] names = listSavedBridgeNames();
+        if (names.length == 0) {
+            JOptionPane.showMessageDialog(mainFrame,
+                    "No saved bridges found in:\n" + BRIDGES_DIR.toAbsolutePath(),
+                    "Load bridge",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
+        Object choice = JOptionPane.showInputDialog(mainFrame,
+                "Choose a saved bridge:",
+                "Load bridge",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                names,
+                names[0]);
+        if (choice == null) {
+            return;
+        }
+        Path path = pathForBridgeName(choice.toString());
         if (!Files.isRegularFile(path)) {
-            JOptionPane.showMessageDialog(mainFrame, "No saved bridge file:\n" + path.toAbsolutePath(),
+            JOptionPane.showMessageDialog(mainFrame, "File not found:\n" + path.toAbsolutePath(),
                     "Load bridge", JOptionPane.WARNING_MESSAGE);
             return;
         }
