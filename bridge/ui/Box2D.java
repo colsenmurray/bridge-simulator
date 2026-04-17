@@ -8,12 +8,29 @@ import org.jbox2d.common.Vec2;
 public class Box2D {
 
     private MainFrame mainFrame;
+    /** Used when {@link #mainFrame} is null (headless). */
+    private int headlessPixelWidth;
+    private int headlessPixelHeight;
 
     private float worldWidth;
     private float worldHeight;
 
     public Box2D(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
+        this.headlessPixelWidth = -1;
+        this.headlessPixelHeight = -1;
+
+        worldWidth = 100f;
+        worldHeight = getPixelHeight() * metersPerPixel();
+    }
+
+    /**
+     * Fixed pixel size (e.g. for headless runs) with the same world width as the GUI {@link Box2D}.
+     */
+    public Box2D(int pixelWidth, int pixelHeight) {
+        this.mainFrame = null;
+        this.headlessPixelWidth = pixelWidth;
+        this.headlessPixelHeight = pixelHeight;
 
         worldWidth = 100f;
         worldHeight = getPixelHeight() * metersPerPixel();
@@ -60,11 +77,11 @@ public class Box2D {
     }
 
     public int getPixelWidth() {
-        return mainFrame.getWidth();
+        return mainFrame != null ? mainFrame.getWidth() : headlessPixelWidth;
     }
 
     public int getPixelHeight() {
-        return mainFrame.getHeight();
+        return mainFrame != null ? mainFrame.getHeight() : headlessPixelHeight;
     }
 
 }

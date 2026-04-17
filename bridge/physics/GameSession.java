@@ -16,14 +16,16 @@ import bridge.save.BridgeSaveFile;
 import bridge.save.SimulationRunJson;
 import bridge.physics.environment.RiverBank;
 import bridge.ui.Box2D;
-import bridge.ui.GamePanel;
 
 /**
  * One play session (build + simulate).
  */
 public class GameSession {
 
-    private GamePanel gamePanel;
+    /** Fixed integration step (seconds), used by GUI and headless runners. */
+    public static final float FIXED_DT = 1f / 60f;
+
+    private SimulationEndListener sessionEndListener;
     private Level level;
     private World world;
     private Bridge bridge;
@@ -36,14 +38,12 @@ public class GameSession {
     private boolean finished = false;
     private Material material = Material.ASPHALT;
 
-    private static final float PROGRESS_SPAN_EPS = 1e-5f;
-
     private float simTime;
     private boolean recordingEnabled;
     private final ArrayList<SimulationRunJson.Sample> recordingSamples = new ArrayList<>();
 
-    public GameSession(GamePanel gamePanel, Box2D box2d, Level level) {
-        this.gamePanel = gamePanel;
+    public GameSession(SimulationEndListener sessionEndListener, Box2D box2d, Level level) {
+        this.sessionEndListener = sessionEndListener;
         this.level = level;
 
         level.centerInView(box2d);
@@ -119,8 +119,12 @@ public class GameSession {
 
     private void endSession() {
         boolean success = getTotalPrice() <= getBudget();
-        gamePanel.onSessionEnd(success, getTotalPrice());
+        sessionEndListener.onSessionEnd(success, getTotalPrice());
         finished = true;
+    }
+
+    public boolean isSessionFinished() {
+        return finished;
     }
 
     public void changeMaterial(Material material) {
@@ -164,21 +168,7 @@ public class GameSession {
      * Rear wheel progress in [0,1] along {@link Level#getAnchorSpanMinX()} … {@link Level#getAnchorSpanMaxX()}.
      */
     public float getCurrentAnchorProgress() {
-        float min = level.getAnchorSpanMinX();
-        float max = level.getAnchorSpanMaxX();
-        float span = max - min;
-        float x = car.getRearWheelX();
-        if (span <= PROGRESS_SPAN_EPS) {
-            return 0.5f;
-        }
-        float p = (x - min) / span;
-        if (p < 0f) {
-            return 0f;
-        }
-        if (p > 1f) {
-            return 1f;
-        }
-        return p;
+        return level.getAnchorProgressForRearWheelX(car.getRearWheelX());
     }
 
     public void tickPhysics(Vec2 mousePos, int mouseButton, boolean mouseClicked, float dt) {

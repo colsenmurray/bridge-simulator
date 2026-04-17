@@ -33,6 +33,8 @@ public class Level implements Serializable {
     private static final long serialVersionUID = 5014471600563766405L;
     /** If anchor list is empty or min/max x are too close, span falls back to car start/finish. */
     private static final float ANCHOR_SPAN_EPS = 1e-4f;
+    /** Used for normalizing rear-wheel progress when the anchor span is usable. */
+    private static final float PROGRESS_SPAN_EPS = 1e-5f;
 
     /**
      * Field names must match legacy {@code ponts.niveau.Niveau} for Java serialization compatibility.
@@ -173,6 +175,20 @@ public class Level implements Serializable {
         return level;
     }
 
+    /**
+     * Loads a level without GUI dialogs; throws on missing file or deserialization errors.
+     */
+    public static Level loadForHeadless(String levelName) throws IOException, ClassNotFoundException {
+        if (levelName == null) {
+            throw new IOException("level name is null");
+        }
+        String path = pathForLevel(levelName);
+        try (FileInputStream fileIn = new FileInputStream(path);
+                ObjectInputStream objectIn = createLevelInputStream(fileIn)) {
+            return (Level) objectIn.readObject();
+        }
+    }
+
     public LinkedList<Vec2> getTerrainPoints() {
         return posCoins;
     }
@@ -278,6 +294,46 @@ public class Level implements Serializable {
             return Math.max(a, b);
         }
         return max;
+    }
+
+    /**
+     * Rear wheel progress in {@code [0, 1]} along the level “run”: anchor min→max when that span is
+     * non-degenerate; otherwise along car start→finish world x. Matches simulation export
+     * {@code progress} and is used for finish detection.
+     */
+    public float getAnchorProgressForRearWheelX(float rearWheelX) {
+        float min = getAnchorSpanMinX();
+        float max = getAnchorSpanMaxX();
+        float span = max - min;
+        if (span > PROGRESS_SPAN_EPS) {
+            float p = (rearWheelX - min) / span;
+            if (p < 0f) {
+                return 0f;
+            }
+            if (p > 1f) {
+                return 1f;
+            }
+            return p;
+        }
+        float lo = computeCarStartX();
+        float hi = computeCarFinishX();
+        if (lo > hi) {
+            float t = lo;
+            lo = hi;
+            hi = t;
+        }
+        float carSpan = hi - lo;
+        if (carSpan <= PROGRESS_SPAN_EPS) {
+            return 0.5f;
+        }
+        float q = (rearWheelX - lo) / carSpan;
+        if (q < 0f) {
+            return 0f;
+        }
+        if (q > 1f) {
+            return 1f;
+        }
+        return q;
     }
 
 }

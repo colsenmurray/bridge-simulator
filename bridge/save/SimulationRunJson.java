@@ -34,18 +34,45 @@ public final class SimulationRunJson {
         }
     }
 
-    public static void writeFile(Path path, String levelName, float anchorMinX, float anchorMaxX,
-            List<Sample> samples) throws IOException {
-        Files.createDirectories(path.getParent());
-        Files.write(path, toJson(levelName, anchorMinX, anchorMaxX, samples).getBytes(StandardCharsets.UTF_8));
+    /**
+     * Optional metadata when the run was produced by the headless simulator.
+     */
+    public static final class HeadlessMeta {
+        public final int maxTimesteps;
+        public final int timestepsRun;
+        public final boolean sessionFinished;
+
+        public HeadlessMeta(int maxTimesteps, int timestepsRun, boolean sessionFinished) {
+            this.maxTimesteps = maxTimesteps;
+            this.timestepsRun = timestepsRun;
+            this.sessionFinished = sessionFinished;
+        }
     }
 
-    private static String toJson(String levelName, float anchorMinX, float anchorMaxX, List<Sample> samples) {
+    public static void writeFile(Path path, String levelName, float anchorMinX, float anchorMaxX,
+            List<Sample> samples) throws IOException {
+        writeFile(path, levelName, anchorMinX, anchorMaxX, samples, null);
+    }
+
+    public static void writeFile(Path path, String levelName, float anchorMinX, float anchorMaxX,
+            List<Sample> samples, HeadlessMeta headless) throws IOException {
+        Files.createDirectories(path.getParent());
+        Files.write(path, toJson(levelName, anchorMinX, anchorMaxX, samples, headless).getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String toJson(String levelName, float anchorMinX, float anchorMaxX, List<Sample> samples,
+            HeadlessMeta headless) {
         StringBuilder sb = new StringBuilder();
         sb.append("{\n");
         sb.append("  \"format\": \"").append(FORMAT).append("\",\n");
         sb.append("  \"version\": ").append(VERSION).append(",\n");
         sb.append("  \"levelName\": \"").append(escape(levelName != null ? levelName : "")).append("\",\n");
+        if (headless != null) {
+            sb.append("  \"headless\": true,\n");
+            sb.append("  \"maxTimesteps\": ").append(headless.maxTimesteps).append(",\n");
+            sb.append("  \"timestepsRun\": ").append(headless.timestepsRun).append(",\n");
+            sb.append("  \"sessionFinished\": ").append(headless.sessionFinished).append(",\n");
+        }
         sb.append("  \"anchorSpan\": {\n");
         sb.append("    \"minX\": ").append(anchorMinX).append(",\n");
         sb.append("    \"maxX\": ").append(anchorMaxX).append("\n");

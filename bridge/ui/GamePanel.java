@@ -57,7 +57,6 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
     private Vec2 mousePos = new Vec2();
 
     private static final int PHYSICS_TICK_MS = 16;
-    private long lastPhysicsTime;
     private Timer renderTimer;
     private Timer physicsTimer;
 
@@ -235,11 +234,7 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
 
         if (session != null) {
             if (source == physicsTimer) {
-                long now = System.currentTimeMillis();
-                float dt = (now - lastPhysicsTime) / 1000f;
-                lastPhysicsTime = now;
-
-                session.tickPhysics(mousePos, mouseButton, mouseClicked, dt);
+                session.tickPhysics(mousePos, mouseButton, mouseClicked, GameSession.FIXED_DT);
                 mouseClicked = false;
             }
 
@@ -514,7 +509,6 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
     }
 
     private void updateSimulationButton() {
-        resetPhysicsClock();
         if (session.isPhysicsRunning()) {
             runPauseButton.setText("Pause");
         } else {
@@ -535,7 +529,6 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
     public void onSessionEnd(boolean success, int price) {
         updateBestPrice(price);
         showEndMessage(success);
-        resetPhysicsClock();
     }
 
     
@@ -574,14 +567,10 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
         return -1;
     }
 
-    private void resetPhysicsClock() {
-        lastPhysicsTime = System.currentTimeMillis();
-    }
-
     private void newSession() {
         Level level = loadSelectedLevel();
         if (level != null) {
-            session = new GameSession(this, box2d, level);
+            session = new GameSession(this::onSessionEnd, box2d, level);
             recordRunCheckBox.setSelected(false);
             recordRunCheckBox.setEnabled(true);
             saveSimulationRunButton.setEnabled(true);

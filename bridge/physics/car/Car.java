@@ -22,12 +22,13 @@ public class Car {
     private Wheel rearWheel;
     private CarBody body;
 
+    private final Level level;
     private boolean stopped = false;
-    private boolean reachedGoal = false;
     private float startX;
     private float finishX;
 
     public Car(World world, Level level) {
+        this.level = level;
         startX = level.computeCarStartX();
         finishX = level.computeCarFinishX();
 
@@ -54,8 +55,17 @@ public class Car {
         frontWheel.draw(g, box2d);
     }
 
+    /**
+     * Session ends when rear-wheel {@linkplain Level#getAnchorProgressForRearWheelX progress} has
+     * reached the end of the span and the car has nearly stopped horizontally (same velocity gate
+     * as before).
+     */
     public boolean testReachedFinish() {
-        return body.getBody().getLinearVelocity().x <= 0.001f && reachedGoal;
+        float p = level.getAnchorProgressForRearWheelX(getRearWheelX());
+        if (p < 1f - 1e-4f) {
+            return false;
+        }
+        return body.getBody().getLinearVelocity().x <= 0.001f;
     }
 
     public void stopIfNeeded() {
@@ -63,11 +73,11 @@ public class Car {
             return;
         }
         float speed = body.getBody().getLinearVelocity().length();
-        if (rearWheel.getX() > finishX) {
+        float progress = level.getAnchorProgressForRearWheelX(rearWheel.getX());
+        if (rearWheel.getX() > finishX || progress >= 1f - 1e-4f) {
             rearWheel.stopMotor();
             frontWheel.stopMotor();
             stopped = true;
-            reachedGoal = true;
         } else if (speed <= 0.001f && rearWheel.getX() > startX) {
             rearWheel.stopMotor();
             frontWheel.stopMotor();
