@@ -13,7 +13,7 @@ class Genome:
         
         self.bridge_json_path = bridge_json_path
 
-        if self.bridge_json_path is None:
+        if self.bridge_json_path is not None:
             self.bridge = Genome.load_from_json(bridge_json_path)
         else:
             self.bridge = deepcopy(bridge_manual)
