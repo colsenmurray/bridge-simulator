@@ -33,8 +33,9 @@ class Genome:
     
 
     def save_to_json(self, bridge_json_path: str):
-        with open(bridge_json_path, 'w') as f:
-            json.dump(self.bridge, f, indent=2)
+        if bridge_json_path is not None:
+            with open(bridge_json_path, 'w') as f:
+                json.dump(self.bridge, f, indent=2)
 
     def clone(self):
         new_genome = Genome(bridge_manual=deepcopy(self.bridge))
