@@ -1,6 +1,7 @@
 import json
 from copy import deepcopy
 from typing import Any, Optional
+import math
 
 class Genome:
     def __init__(self, bridge_json_path: Optional[str] = None, bridge_manual: Optional[dict[str, Any]] = None):
@@ -70,6 +71,11 @@ class Genome:
                 return False
             
             edge_cache.add(edge_key)
+
+        for edge in self.edges:
+            if self.edge_length(edge['from'], edge['to']) > 12.5:
+                self.valid = False
+                return False
     
         self.valid = True
         return True
@@ -89,3 +95,10 @@ class Genome:
                 mutable_joint_indices.append(i)
         
         return mutable_joint_indices
+    
+    # euclidean distance between joints
+    def edge_length(self, i, j):
+        dx = self.joints[i]['x'] - self.joints[j]['x']
+        dy = self.joints[i]['y'] - self.joints[j]['y']
+
+        return math.sqrt(dx*dx + dy*dy)
