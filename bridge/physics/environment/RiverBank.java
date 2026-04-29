@@ -10,10 +10,12 @@ import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.BodyDef;
 import org.jbox2d.dynamics.BodyType;
+import org.jbox2d.dynamics.Fixture;
 import org.jbox2d.dynamics.FixtureDef;
 import org.jbox2d.dynamics.World;
 
 import bridge.level.Level;
+import bridge.physics.FixtureUserData;
 import bridge.physics.PhysicsObject;
 import bridge.physics.beams.Beam;
 import bridge.physics.car.Car;
@@ -52,7 +54,8 @@ public class RiverBank extends PhysicsObject {
                 EdgeShape shape = new EdgeShape();
                 shape.set(prev, point);
                 fixtureDef.shape = shape;
-                edgeBody.createFixture(fixtureDef);
+                Fixture fixture = edgeBody.createFixture(fixtureDef);
+                fixture.setUserData(FixtureUserData.TERRAIN);
             }
             prev = point;
         }

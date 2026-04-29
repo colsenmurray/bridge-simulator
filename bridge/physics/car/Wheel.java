@@ -12,6 +12,7 @@ import org.jbox2d.dynamics.World;
 import org.jbox2d.dynamics.joints.RevoluteJoint;
 import org.jbox2d.dynamics.joints.RevoluteJointDef;
 
+import bridge.physics.FixtureUserData;
 import bridge.physics.PhysicsObject;
 import bridge.ui.Box2D;
 
@@ -51,6 +52,7 @@ public class Wheel extends PhysicsObject {
         FixtureDef fixtureDef = createFixtureDef(FRICTION, RESTITUTION, DENSITY, CATEGORY, MASK);
         fixtureDef.shape = shape;
         body.createFixture(fixtureDef);
+        body.getFixtureList().setUserData(FixtureUserData.CAR_WHEEL);
     }
 
     public void attachToCar(World world, CarBody carBody) {

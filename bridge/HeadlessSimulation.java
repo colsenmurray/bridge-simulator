@@ -9,6 +9,7 @@ import org.jbox2d.common.Vec2;
 
 import bridge.level.Level;
 import bridge.physics.GameSession;
+import bridge.physics.SessionEndReason;
 import bridge.physics.SimulationEndListener;
 import bridge.save.BridgeJson;
 import bridge.save.BridgeSaveFile;
@@ -75,7 +76,7 @@ public final class HeadlessSimulation {
             return 1;
         }
 
-        SimulationEndListener noop = (success, price) -> {
+        SimulationEndListener noop = (success, price, reason) -> {
         };
 
         Box2D box2d = new Box2D(DEFAULT_PIXEL_WIDTH, DEFAULT_PIXEL_HEIGHT);
@@ -91,10 +92,31 @@ public final class HeadlessSimulation {
 
         String uuid = UUID.randomUUID().toString();
         Path out = Paths.get("res", "simulations", uuid + ".json");
+        String endReason;
+        boolean crashed;
+        if (session.isSessionFinished()) {
+            SessionEndReason r = session.getSessionEndReason();
+            if (r == SessionEndReason.CRASH) {
+                endReason = "crash";
+                crashed = true;
+            } else if (r == SessionEndReason.STUCK) {
+                endReason = "stuck";
+                crashed = false;
+            } else if (r == SessionEndReason.FINISH) {
+                endReason = "finish";
+                crashed = false;
+            } else {
+                endReason = "finish";
+                crashed = false;
+            }
+        } else {
+            endReason = "max_steps";
+            crashed = false;
+        }
+        SimulationRunJson.RunEnd re = new SimulationRunJson.RunEnd(session.isSessionFinished(), endReason, crashed);
         try {
             SimulationRunJson.writeFile(out, levelName, level.getAnchorSpanMinX(), level.getAnchorSpanMaxX(),
-                    session.getRecordingSamples(),
-                    new SimulationRunJson.HeadlessMeta(maxSteps, step, session.isSessionFinished()));
+                    session.getRecordingSamples(), re, new SimulationRunJson.HeadlessTimesteps(maxSteps, step));
         } catch (IOException e) {
             err("Failed to write output: " + e.getMessage());
             return 1;

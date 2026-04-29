@@ -336,4 +336,113 @@ public class Level implements Serializable {
         return q;
     }
 
+    private static final float TERRAIN_Y_AT_X_EPS = 1e-4f;
+
+    /**
+     * Y of a bridge joint with minimal x in {@code posLiaisons}. First with that x. Degenerate: car
+     * line endpoint y.
+     */
+    public float getEndAnchorYAtMinX() {
+        if (posLiaisons.isEmpty() || isDegenerateAnchorSpan()) {
+            float a = computeCarStartX();
+            float b = computeCarFinishX();
+            if (a <= b) {
+                return getTerrainPoints().get(2).y;
+            }
+            return getTerrainPoints().get(getTerrainPoints().size() - 3).y;
+        }
+        float xMin = Float.POSITIVE_INFINITY;
+        for (Vec2 p : posLiaisons) {
+            if (p.x < xMin) {
+                xMin = p.x;
+            }
+        }
+        for (Vec2 p : posLiaisons) {
+            if (Math.abs(p.x - xMin) < 1e-2f) {
+                return p.y;
+            }
+        }
+        return getTerrainPoints().get(2).y;
+    }
+
+    /**
+     * Y of a bridge joint with maximal x in {@code posLiaisons}. First with that x. Degenerate: see
+     * {@link #getEndAnchorYAtMinX()}.
+     */
+    public float getEndAnchorYAtMaxX() {
+        if (posLiaisons.isEmpty() || isDegenerateAnchorSpan()) {
+            float a = computeCarStartX();
+            float b = computeCarFinishX();
+            if (a > b) {
+                return getTerrainPoints().get(2).y;
+            }
+            return getTerrainPoints().get(getTerrainPoints().size() - 3).y;
+        }
+        float xMax = Float.NEGATIVE_INFINITY;
+        for (Vec2 p : posLiaisons) {
+            if (p.x > xMax) {
+                xMax = p.x;
+            }
+        }
+        for (Vec2 p : posLiaisons) {
+            if (Math.abs(p.x - xMax) < 1e-2f) {
+                return p.y;
+            }
+        }
+        return getTerrainPoints().get(getTerrainPoints().size() - 3).y;
+    }
+
+    private boolean isDegenerateAnchorSpan() {
+        float min = Float.POSITIVE_INFINITY;
+        float max = Float.NEGATIVE_INFINITY;
+        for (Vec2 p : posLiaisons) {
+            if (p.x < min) {
+                min = p.x;
+            }
+            if (p.x > max) {
+                max = p.x;
+            }
+        }
+        return posLiaisons.isEmpty() || max - min < ANCHOR_SPAN_EPS;
+    }
+
+    /**
+     * Interpolated surface Y on the user terrain chain (after boundary points: indices
+     * {@code 2 … size-3} in {@link #getTerrainPoints()}). x outside the chain's range clamps to
+     * end vertex y.
+     */
+    public float terrainProfileYAt(float x) {
+        LinkedList<Vec2> t = getTerrainPoints();
+        int p0 = 2;
+        int pEnd = t.size() - 3;
+        if (t.size() < 5 || pEnd < p0) {
+            if (t.size() > 2) {
+                return t.get(2).y;
+            }
+            return 0f;
+        }
+        if (x <= t.get(p0).x) {
+            return t.get(p0).y;
+        }
+        if (x >= t.get(pEnd).x) {
+            return t.get(pEnd).y;
+        }
+        for (int i = p0; i < pEnd; i++) {
+            Vec2 a = t.get(i);
+            Vec2 b = t.get(i + 1);
+            float xLo = Math.min(a.x, b.x);
+            float xHi = Math.max(a.x, b.x);
+            if (x < xLo - TERRAIN_Y_AT_X_EPS || x > xHi + TERRAIN_Y_AT_X_EPS) {
+                continue;
+            }
+            if (Math.abs(b.x - a.x) < 1e-5f) {
+                return 0.5f * (a.y + b.y);
+            }
+            float u = (x - a.x) / (b.x - a.x);
+            u = Math.max(0f, Math.min(1f, u));
+            return a.y + u * (b.y - a.y);
+        }
+        return 0.5f * (t.get(p0).y + t.get(pEnd).y);
+    }
+
 }

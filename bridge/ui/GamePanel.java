@@ -32,6 +32,7 @@ import org.jbox2d.common.Vec2;
 
 import bridge.level.Level;
 import bridge.physics.GameSession;
+import bridge.physics.SessionEndReason;
 import bridge.physics.beams.Material;
 import bridge.save.BridgeJson;
 import bridge.save.BridgeSaveFile;
@@ -384,7 +385,8 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
         try {
             Level lev = session.getLevel();
             SimulationRunJson.writeFile(path, level, lev.getAnchorSpanMinX(), lev.getAnchorSpanMaxX(),
-                    session.getRecordingSamples());
+                    session.getRecordingSamples(),
+                    SimulationRunJson.runEndFromSession(session.isSessionFinished(), session.getSessionEndReason()));
             JOptionPane.showMessageDialog(mainFrame, "Saved:\n" + path.toAbsolutePath(), "Save run",
                     JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException ex) {
@@ -526,13 +528,30 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
         return (String) levelComboBox.getSelectedItem();
     }
 
-    public void onSessionEnd(boolean success, int price) {
-        updateBestPrice(price);
-        showEndMessage(success);
+    public void onSessionEnd(boolean success, int price, SessionEndReason reason) {
+        if (reason == SessionEndReason.FINISH) {
+            updateBestPrice(price);
+        }
+        showEndMessage(success, reason);
     }
 
-    
-    private void showEndMessage(boolean success) {
+    private void showEndMessage(boolean success, SessionEndReason reason) {
+        if (reason == SessionEndReason.CRASH) {
+            String title = "Car crashed";
+            String text = "The car crashed into the terrain on level " + getSelectedLevelName() + ".";
+            text += "\n\n" + "Price: " + Integer.toString(session.getTotalPrice()) + " $";
+            text += "\n\n" + "You can try again by clicking " + restartButton.getText() + ".";
+            JOptionPane.showMessageDialog(mainFrame, text, title, JOptionPane.PLAIN_MESSAGE);
+            return;
+        }
+        if (reason == SessionEndReason.STUCK) {
+            String title = "Car stopped";
+            String text = "The car is not moving on level " + getSelectedLevelName() + ".";
+            text += "\n\n" + "Price: " + Integer.toString(session.getTotalPrice()) + " $";
+            text += "\n\n" + "You can try again by clicking " + restartButton.getText() + ".";
+            JOptionPane.showMessageDialog(mainFrame, text, title, JOptionPane.PLAIN_MESSAGE);
+            return;
+        }
         String text = "";
         String title = "";
         if (success) {

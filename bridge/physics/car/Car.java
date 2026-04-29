@@ -27,6 +27,19 @@ public class Car {
     private float startX;
     private float finishX;
 
+    /** How long the car has been below {@link #STUCK_SPEED_THRESHOLD} (seconds); reset when moving. */
+    private float notMovingAccum;
+    /**
+     * Body speed (m/s in world) below this counts as "not moving" for the stuck end condition.
+     */
+    public static final float STUCK_SPEED_THRESHOLD = 0.08f;
+    /** Sustained stillness this long ends the run (only after {@link #STUCK_MIN_SIM_TIME}). */
+    public static final float STUCK_TIME_SECONDS = 2.5f;
+    /** Do not check stuck until the sim has run this long (avoids spawn frame). */
+    public static final float STUCK_MIN_SIM_TIME = 0.4f;
+    /** Rear wheel must be past this offset from the car start line before stuck can apply. */
+    public static final float STUCK_PAST_SPAWN_EPS = 0.15f;
+
     public Car(World world, Level level) {
         this.level = level;
         startX = level.computeCarStartX();
@@ -49,6 +62,18 @@ public class Car {
         return rearWheel.getX();
     }
 
+    public float getRearWheelY() {
+        return rearWheel.getY();
+    }
+
+    public float getFrontWheelX() {
+        return frontWheel.getX();
+    }
+
+    public float getFrontWheelY() {
+        return frontWheel.getY();
+    }
+
     public void draw(Graphics g, Box2D box2d) {
         body.draw(g, box2d);
         rearWheel.draw(g, box2d);
@@ -66,6 +91,33 @@ public class Car {
             return false;
         }
         return body.getBody().getLinearVelocity().x <= 0.001f;
+    }
+
+    /**
+     * True once the car has been nearly still long enough on the run (not at spawn, not at the
+     * goal). Call each tick with the integration step and current simulation time.
+     */
+    public boolean testStuckNotMoving(float dt, float simTime) {
+        float p = level.getAnchorProgressForRearWheelX(rearWheel.getX());
+        if (p >= 1f - 1e-3f) {
+            notMovingAccum = 0f;
+            return false;
+        }
+        if (simTime < STUCK_MIN_SIM_TIME) {
+            notMovingAccum = 0f;
+            return false;
+        }
+        if (rearWheel.getX() <= startX + STUCK_PAST_SPAWN_EPS) {
+            notMovingAccum = 0f;
+            return false;
+        }
+        float speed = body.getBody().getLinearVelocity().length();
+        if (speed < STUCK_SPEED_THRESHOLD) {
+            notMovingAccum += dt;
+        } else {
+            notMovingAccum = 0f;
+        }
+        return notMovingAccum >= STUCK_TIME_SECONDS;
     }
 
     public void stopIfNeeded() {

@@ -41,6 +41,10 @@ public class GameSession {
     private float simTime;
     private boolean recordingEnabled;
     private final ArrayList<SimulationRunJson.Sample> recordingSamples = new ArrayList<>();
+    private SessionEndReason sessionEndReason = SessionEndReason.RUNNING;
+    /** Set during {@code world.step} when the chassis hits terrain; applied after the step. */
+    private boolean pendingTerrainCrash = false;
+    private static final float MIN_TIME_BEFORE_TERRAIN_CRASH = 0.1f;
 
     public GameSession(SimulationEndListener sessionEndListener, Box2D box2d, Level level) {
         this.sessionEndListener = sessionEndListener;
@@ -56,6 +60,17 @@ public class GameSession {
         bridge = new Bridge(world, level);
         car = new Car(world, level);
         budget = level.getBudget();
+        world.setContactListener(new CarTerrainContactListener(this));
+    }
+
+    /**
+     * Called from {@link CarTerrainContactListener} when the car body first contacts terrain.
+     */
+    public void markPendingTerrainCrash() {
+        if (finished || simTime < MIN_TIME_BEFORE_TERRAIN_CRASH) {
+            return;
+        }
+        pendingTerrainCrash = true;
     }
 
     public Level getLevel() {
@@ -117,9 +132,26 @@ public class GameSession {
         car.draw(g, box2d);
     }
 
-    private void endSession() {
+    public SessionEndReason getSessionEndReason() {
+        return sessionEndReason;
+    }
+
+    private void endSessionFinish() {
         boolean success = getTotalPrice() <= getBudget();
-        sessionEndListener.onSessionEnd(success, getTotalPrice());
+        sessionEndReason = SessionEndReason.FINISH;
+        sessionEndListener.onSessionEnd(success, getTotalPrice(), sessionEndReason);
+        finished = true;
+    }
+
+    private void endSessionCrash() {
+        sessionEndReason = SessionEndReason.CRASH;
+        sessionEndListener.onSessionEnd(false, getTotalPrice(), sessionEndReason);
+        finished = true;
+    }
+
+    private void endSessionStuck() {
+        sessionEndReason = SessionEndReason.STUCK;
+        sessionEndListener.onSessionEnd(false, getTotalPrice(), sessionEndReason);
         finished = true;
     }
 
@@ -181,8 +213,15 @@ public class GameSession {
                 recordingSamples.add(new SimulationRunJson.Sample(simTime, getCurrentAnchorProgress(),
                         car.getRearWheelX(), dt));
             }
-            if (!finished && car.testReachedFinish()) {
-                endSession();
+            if (!finished) {
+                if (pendingTerrainCrash) {
+                    endSessionCrash();
+                    pendingTerrainCrash = false;
+                } else if (car.testStuckNotMoving(dt, simTime)) {
+                    endSessionStuck();
+                } else if (car.testReachedFinish()) {
+                    endSessionFinish();
+                }
             }
         } else if (bridgeBuilding) {
             bridge.handleInput(world, mousePos, mouseButton, mouseClicked, material, riverBank);

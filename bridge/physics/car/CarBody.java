@@ -20,6 +20,7 @@ import org.jbox2d.dynamics.BodyType;
 import org.jbox2d.dynamics.FixtureDef;
 import org.jbox2d.dynamics.World;
 
+import bridge.physics.FixtureUserData;
 import bridge.physics.PhysicsObject;
 import bridge.ui.Box2D;
 
@@ -57,6 +58,7 @@ public class CarBody extends PhysicsObject {
         FixtureDef fixtureDef = createFixtureDef(FRICTION, RESTITUTION, DENSITY, CATEGORY, MASK);
         fixtureDef.shape = shape;
         body.createFixture(fixtureDef);
+        body.getFixtureList().setUserData(FixtureUserData.CAR_BODY);
     }
 
     private void loadImage() {
