@@ -4,7 +4,7 @@ import json
 import subprocess
 import os
 
-MAX_COST = 150_000
+MAX_COST = 300_000
 
 def evaluate(genome: Genome):
     temp_path = None
@@ -35,7 +35,7 @@ def evaluate(genome: Genome):
 
         progress = output['samples'][-1]['progress']
 
-        cost_penalty = 1 / (MAX_COST * 2)
+        cost_penalty = 1 / MAX_COST
         fitness = 100 * (progress - cost_penalty * genome.cost)
 
         genome.progress = progress
