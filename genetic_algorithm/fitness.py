@@ -35,8 +35,8 @@ def evaluate(genome: Genome):
 
         progress = output['samples'][-1]['progress']
 
-        cost_penalty = 1 / MAX_COST
-        fitness = 100 * (progress - cost_penalty * genome.cost)
+        amt_over_max = max(0, genome.cost - MAX_COST) / MAX_COST
+        fitness = 100 * (progress - genome.cost / MAX_COST) - 200 * amt_over_max
 
         genome.progress = progress
         genome.fitness = fitness
