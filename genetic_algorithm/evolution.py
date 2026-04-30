@@ -33,7 +33,6 @@ class Evolution:
         if self.config.seed is not None:
 
             random.seed(int(self.config.seed))
-        self.population = self.initialize_population()
         self.best_fitness = float('-inf')
         self.best_individual = None
         self.best_fitness_in_generation = float('-inf')
@@ -44,6 +43,8 @@ class Evolution:
         self.best_individual_history = []
         self._fitness_csv_path = os.path.join(self.output_folder, "fitness_history.csv")
         self._hyperparameters_path = os.path.join(self.output_folder, "hyperparameters.yml")
+        self.fail_streak = 0
+        self.population = self.initialize_population()
 
     def _write_hyperparameters(self) -> None:
         payload = {
@@ -96,7 +97,7 @@ class Evolution:
         for _ in range(self.config.population_size):
             child = initial_individual.clone()
             for _ in range(10):
-                child = mutate(child)
+                child = mutate(child, self.fail_streak)
             pop.append(child)
         print(f"[evolution] init done joints={len(pop[0].joints)} edges={len(pop[0].edges)}")
         return pop
@@ -126,6 +127,10 @@ class Evolution:
                     self.save_best_individual()
         avg = total / max(1, len(self.population))
         print(f"[evolution] eval done best={best_in_pop:.3f} avg={avg:.3f} global_best={float(self.best_fitness):.3f}")
+        if self.best_individual.end_reason == "stuck" or self.best_individual.end_reason == "crash" or self.best_individual.end_reason == "fell":
+            self.fail_streak += 1
+        else:
+            self.fail_streak = 0
         return best_in_pop, avg
 
     def evolve_population(self):
@@ -147,15 +152,15 @@ class Evolution:
             p2_clone = p2.clone()
             
             if len(next_pop) >= int(self.config.population_size * 0.9):
-                mutations_count = random.randint(0, 10)
+                mutations_count = random.randint(0, (self.fail_streak + 10))
                 for _ in range(mutations_count):
                     if random.random() < float(self.config.mutation_rate):
-                        p1_clone = mutate(p1_clone)
-                        p2_clone = mutate(p2_clone)
+                        p1_clone = mutate(p1_clone, self.fail_streak)
+                        p2_clone = mutate(p2_clone, self.fail_streak)
             else:
                 if random.random() < float(self.config.mutation_rate):
-                    p1_clone = mutate(p1_clone)
-                    p2_clone = mutate(p2_clone)
+                    p1_clone = mutate(p1_clone, self.fail_streak)
+                    p2_clone = mutate(p2_clone, self.fail_streak)
                     
 
 

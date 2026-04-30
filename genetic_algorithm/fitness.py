@@ -9,14 +9,14 @@ MAX_COST = 30_000
 DEFAULT_MAX_STEPS = 1000
 
 # Fitness weights (tune as needed)
-W_PROGRESS = 1000.0
+W_PROGRESS = 600.0
 W_COST = 700.0
 W_TIME = 0.0
 
 # Event penalties (scaled by (1 - progress))
-PENALTY_CRASH = 1000.0
-PENALTY_FALL = 1000.0
-PENALTY_STUCK = 1000.0
+PENALTY_CRASH = 2000.0
+PENALTY_FALL = 2000.0
+PENALTY_STUCK = 2000.0
 
 _BEAM_MAX_LENGTH_FOR_PRICING = 8.0  # must match bridge.physics.beams.Beam.MAX_LENGTH
 _MATERIAL_UNIT_PRICE: dict[str, int] = {

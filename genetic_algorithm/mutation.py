@@ -191,7 +191,7 @@ def _remove_joint(genome: Genome) -> None:
 
 
 # clone genome, mutate it, return new genome
-def mutate(parent: Genome):
+def mutate(parent: Genome, fail_streak: int):
     child = parent.clone()
 
 
@@ -210,15 +210,15 @@ def mutate(parent: Genome):
     # Joint-structure mutation
     r_joint = random.random()
 
-    if r_joint < 0.1:
+    if r_joint < max(0.0, 0.1 - (fail_streak * 0.01)):
         _remove_joint(child)
 
     # Edge-structure mutation
     r_edge = random.random()
-    if r_edge < 0.6:
+    if r_edge < min(1.0, 0.6 + (fail_streak * 0.01)):
         _add_edge(child)
 
-    if r_edge < 0.55:
+    if r_edge < max(0.0, 0.55 - (fail_streak * 0.01)):
         _remove_edge(child)
 
     # Prune any floating components not connected to fixed anchors.

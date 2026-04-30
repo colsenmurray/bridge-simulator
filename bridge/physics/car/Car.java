@@ -37,8 +37,32 @@ public class Car {
     public static final float STUCK_TIME_SECONDS = 2.5f;
     /** Do not check stuck until the sim has run this long (avoids spawn frame). */
     public static final float STUCK_MIN_SIM_TIME = 0.4f;
-    /** Rear wheel must be past this offset from the car start line before stuck can apply. */
+    /**
+     * Rear wheel must be past this offset from the car start line before stuck can apply,
+     * until {@link #forwardMotionStarted} is true (see {@link #FORWARD_MOTION_VX_THRESHOLD}).
+     */
     public static final float STUCK_PAST_SPAWN_EPS = 0.15f;
+    /**
+     * Body +X velocity above this (m/s) once latches {@link #forwardMotionStarted}: the spawn
+     * gate for stuck detection is then skipped so a stall still counts as stuck even if the rear
+     * wheel never crossed {@link #startX}.
+     */
+    public static final float FORWARD_MOTION_VX_THRESHOLD = 0.12f;
+    /**
+     * End as stuck if rear-wheel anchor progress does not increase for this many physics steps
+     * (same spawn / min-sim gates as velocity stuck). Catches crawling / jitter with no net gain.
+     */
+    public static final int STUCK_PLATEAU_STEPS = 200;
+    /** Progress must exceed the running peak by this much to count as improvement (float noise). */
+    public static final float STUCK_PLATEAU_PROGRESS_EPS = 1e-4f;
+
+    /** Set after the car has clearly moved forward; past-spawn check for stuck is then disabled. */
+    private boolean forwardMotionStarted;
+
+    /** Best anchor progress seen since plateau tracking was (re)started; {@code < 0} = uninitialized. */
+    private float plateauPeakProgress = -1f;
+    /** Consecutive physics steps with no progress improvement over {@link #plateauPeakProgress}. */
+    private int stepsWithoutProgressImprovement;
 
     public Car(World world, Level level) {
         this.level = level;
@@ -94,20 +118,50 @@ public class Car {
     }
 
     /**
-     * True once the car has been nearly still long enough on the run (not at spawn, not at the
-     * goal). Call each tick with the integration step and current simulation time.
+     * True if the car is stuck: either nearly still long enough (velocity gate), or anchor
+     * progress has not improved for {@link #STUCK_PLATEAU_STEPS} physics steps. Not at spawn (until
+     * forward motion / past start line) and not at the goal. Call each tick.
      */
     public boolean testStuckNotMoving(float dt, float simTime) {
+        float vx = body.getBody().getLinearVelocity().x;
+        if (vx > FORWARD_MOTION_VX_THRESHOLD) {
+            forwardMotionStarted = true;
+        }
+
         float p = level.getAnchorProgressForRearWheelX(rearWheel.getX());
         if (p >= 1f - 1e-3f) {
             notMovingAccum = 0f;
+            plateauPeakProgress = -1f;
+            stepsWithoutProgressImprovement = 0;
             return false;
         }
+
+        final boolean pastSpawnGate = forwardMotionStarted
+                || rearWheel.getX() > startX + STUCK_PAST_SPAWN_EPS;
+
+        if (simTime >= STUCK_MIN_SIM_TIME && pastSpawnGate) {
+            if (plateauPeakProgress < 0f) {
+                plateauPeakProgress = p;
+                stepsWithoutProgressImprovement = 0;
+            } else if (p > plateauPeakProgress + STUCK_PLATEAU_PROGRESS_EPS) {
+                plateauPeakProgress = p;
+                stepsWithoutProgressImprovement = 0;
+            } else {
+                stepsWithoutProgressImprovement++;
+            }
+            if (stepsWithoutProgressImprovement >= STUCK_PLATEAU_STEPS) {
+                return true;
+            }
+        } else {
+            plateauPeakProgress = -1f;
+            stepsWithoutProgressImprovement = 0;
+        }
+
         if (simTime < STUCK_MIN_SIM_TIME) {
             notMovingAccum = 0f;
             return false;
         }
-        if (rearWheel.getX() <= startX + STUCK_PAST_SPAWN_EPS) {
+        if (!pastSpawnGate) {
             notMovingAccum = 0f;
             return false;
         }
