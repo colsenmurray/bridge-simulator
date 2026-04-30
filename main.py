@@ -13,5 +13,5 @@ if __name__ == "__main__":
 
     config = GAConfig.load_from_yaml(args.config_file)
 
-    evolution = Evolution(config, args.output_folder)
+    evolution = Evolution(config, args.output_folder, config_source_path=args.config_file)
     evolution.run()

@@ -1,16 +1,35 @@
 from genetic_algorithm.config import GAConfig
 from genetic_algorithm.genome import Genome
 from genetic_algorithm.crossover import crossover
-from genetic_algorithm.fitness import evaluate_fitness
+from genetic_algorithm.fitness import evaluate_fitness, get_fitness_hyperparameters
 from genetic_algorithm.selection import select_tournament
 from genetic_algorithm.mutation import mutate
+import csv
 import random
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
+from typing import Optional
+
+import yaml
+
+RESET = "\033[0m"
+RED = "\033[31m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+BLUE = "\033[34m"
+BOLD = "\033[1m"
 
 class Evolution:
-    def __init__(self, config: GAConfig, output_folder: str):
+    def __init__(
+        self,
+        config: GAConfig,
+        output_folder: str,
+        *,
+        config_source_path: Optional[str] = None,
+    ):
         self.config = config
+        self._config_source_path = config_source_path
         if self.config.seed is not None:
 
             random.seed(int(self.config.seed))
@@ -23,12 +42,62 @@ class Evolution:
         self.generation = 0
         self.best_fitness_history = []
         self.best_individual_history = []
+        self._fitness_csv_path = os.path.join(self.output_folder, "fitness_history.csv")
+        self._hyperparameters_path = os.path.join(self.output_folder, "hyperparameters.yml")
+
+    def _write_hyperparameters(self) -> None:
+        payload = {
+            "run_metadata": {
+                "started_at_utc": datetime.now(timezone.utc).isoformat(),
+                **(
+                    {"config_file": os.path.abspath(self._config_source_path)}
+                    if self._config_source_path
+                    else {}
+                ),
+            },
+            "genetic_algorithm": dict(vars(self.config)),
+            "fitness": get_fitness_hyperparameters(),
+        }
+        with open(self._hyperparameters_path, "w", encoding="utf-8") as f:
+            yaml.safe_dump(payload, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+    def _append_fitness_history_row(
+        self,
+        generation: int,
+        best_in_population: float,
+        mean_fitness: float,
+        global_best_fitness: float,
+    ) -> None:
+        write_header = not os.path.exists(self._fitness_csv_path)
+        with open(self._fitness_csv_path, "a", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            if write_header:
+                w.writerow(
+                    [
+                        "generation",
+                        "best_in_population",
+                        "mean_fitness",
+                        "global_best_fitness",
+                    ]
+                )
+            w.writerow(
+                [
+                    generation,
+                    f"{best_in_population:.6f}",
+                    f"{mean_fitness:.6f}",
+                    f"{global_best_fitness:.6f}",
+                ]
+            )
 
     def initialize_population(self):
         print(f"[evolution] init population size={self.config.population_size} from={self.config.initial_individual}")
         initial_individual = Genome(bridge_json_path=self.config.initial_individual)
-
-        pop = [mutate(initial_individual.clone()) for _ in range(self.config.population_size)]
+        pop = []
+        for _ in range(self.config.population_size):
+            child = initial_individual.clone()
+            for _ in range(10):
+                child = mutate(child)
+            pop.append(child)
         print(f"[evolution] init done joints={len(pop[0].joints)} edges={len(pop[0].edges)}")
         return pop
 
@@ -57,6 +126,7 @@ class Evolution:
                     self.save_best_individual()
         avg = total / max(1, len(self.population))
         print(f"[evolution] eval done best={best_in_pop:.3f} avg={avg:.3f} global_best={float(self.best_fitness):.3f}")
+        return best_in_pop, avg
 
     def evolve_population(self):
         # Elitism: keep top-N unchanged (by fitness)
@@ -71,13 +141,18 @@ class Evolution:
         while len(next_pop) < target_n:
             p1 = select_tournament(self.population, tournament_size=int(self.config.tournament_size))
             p2 = select_tournament(self.population, tournament_size=int(self.config.tournament_size))
-            child = None
+
 
             p1_clone = p1.clone()
             p2_clone = p2.clone()
-            mutations_count = random.randint(0, 15)
             
-            for _ in range(mutations_count):
+            if len(next_pop) >= int(self.config.population_size * 0.9):
+                mutations_count = random.randint(0, 10)
+                for _ in range(mutations_count):
+                    if random.random() < float(self.config.mutation_rate):
+                        p1_clone = mutate(p1_clone)
+                        p2_clone = mutate(p2_clone)
+            else:
                 if random.random() < float(self.config.mutation_rate):
                     p1_clone = mutate(p1_clone)
                     p2_clone = mutate(p2_clone)
@@ -100,19 +175,36 @@ class Evolution:
             self.best_fitness_history.append(float(self.best_fitness))
             self.best_individual_history.append(self.best_individual.clone())
             self.best_individual.save_to_json(os.path.join(self.output_folder, f"best_individual_{self.generation}.json"))
-
+            print(f"{BOLD}{GREEN}Best individual saved - Fitness: {self.best_fitness:.3f}{RESET}")
 
     def run(self):
         print(f"[evolution] run start generations={self.config.generations}")
-        self.evaluate_population()
+        os.makedirs(self.output_folder, exist_ok=True)
+        self._write_hyperparameters()
+
+        best_in_pop, avg = self.evaluate_population()
+        self._append_fitness_history_row(
+            0,
+            best_in_pop,
+            avg,
+            float(self.best_fitness),
+        )
 
         for generation in range(self.config.generations):
             self.generation += 1
-            print(f"[evolution] --------------------------------")
-            print(f"[evolution] generation {generation+1}/{self.config.generations} start")
             self.population = self.evolve_population()
-            self.evaluate_population()
+            best_in_pop, avg = self.evaluate_population()
+            self._append_fitness_history_row(
+                self.generation,
+                best_in_pop,
+                avg,
+                float(self.best_fitness),
+            )
             # Track best individual seen so far (already maintained in evaluate_population)
-            print(f"[evolution] generation {generation+1} done global_best={float(self.best_fitness):.3f}")
+            print(f"[evolution] --------------------------------")
+            print(f"[evolution] End Reason: {self.best_individual.end_reason}")
+            print(f"[evolution] Progress: {self.best_individual.progress}")
+            print(f"[evolution] generation {generation+1}/{self.config.generations}")
+            print(f"[evolution] global_best={float(self.best_fitness):.3f}")
 
         return self.best_individual

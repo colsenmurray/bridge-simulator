@@ -32,7 +32,7 @@ class Genome:
         self.progress = 0.0
         self.cost = self.bridge.get('cost', 0.0)
         self.valid = True
-
+        self.end_reason = None
 
     @staticmethod
     def _normalize_joint_dict(joint: dict[str, Any]) -> dict[str, Any]:
@@ -236,6 +236,7 @@ class Genome:
         new_genome.progress = self.progress
         new_genome.cost = self.cost
         new_genome.valid = self.valid
+        new_genome.end_reason = self.end_reason
 
         return new_genome
     

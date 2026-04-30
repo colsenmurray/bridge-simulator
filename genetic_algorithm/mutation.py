@@ -199,17 +199,26 @@ def mutate(parent: Genome):
     if random.random() < 0.70:
         _move_joint(child)
 
+    # r = random.random()
+    # if r < 0.1:
+    #     _remove_joint(child)
+    # elif r < 0.2:
+    #     _add_edge(child)
+    # elif r < 0.3:
+    #     _remove_edge(child)
+
     # Joint-structure mutation
     r_joint = random.random()
 
-    if r_joint < 0.16:
+    if r_joint < 0.1:
         _remove_joint(child)
 
     # Edge-structure mutation
     r_edge = random.random()
-    if r_edge < 0.15:
+    if r_edge < 0.6:
         _add_edge(child)
-    elif r_edge < 0.25:
+
+    if r_edge < 0.55:
         _remove_edge(child)
 
     # Prune any floating components not connected to fixed anchors.
