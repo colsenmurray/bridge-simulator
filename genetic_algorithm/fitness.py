@@ -35,10 +35,24 @@ def evaluate_fitness(genome: Genome, level_name: str = "01"):
             text=True
         )
 
-        output_path = result.stdout.strip()
+        # Simulator is expected to print the output json path, but JVM warnings/logs
+        # can appear alongside it. Be tolerant and extract the last *.json line.
+        combined = "\n".join(
+            s for s in [result.stdout, result.stderr] if isinstance(s, str) and s.strip()
+        )
+        candidates = []
+        for line in combined.splitlines():
+            line = line.strip()
+            if line.endswith(".json"):
+                candidates.append(line)
+
+        output_path = candidates[-1] if candidates else ""
 
         if not output_path.endswith(".json"):
-            raise RuntimeError(f"Unexpected simulation output: {output_path}")
+            raise RuntimeError(
+                "Unexpected simulation output (expected a .json path). "
+                f"stdout={result.stdout!r} stderr={result.stderr!r}"
+            )
 
         with open(output_path, "r") as f:
             output = json.load(f)
