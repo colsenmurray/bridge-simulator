@@ -49,6 +49,14 @@ public class Car {
      */
     public static final float FORWARD_MOTION_VX_THRESHOLD = 0.12f;
     /**
+     * After this sim time, stuck checks may run even if the car never passed the spawn line,
+     * while anchor progress stays at or below {@link #STUCK_UNGATED_MAX_PROGRESS}. Covers a wedge
+     * at the start where wheels spin but the body never clears {@link #startX}.
+     */
+    public static final float STUCK_UNGATED_AFTER_SIM_TIME = 2.0f;
+    /** With {@link #STUCK_UNGATED_AFTER_SIM_TIME}, only bypass the spawn line gate below this progress. */
+    public static final float STUCK_UNGATED_MAX_PROGRESS = 0.03f;
+    /**
      * End as stuck if rear-wheel anchor progress does not increase for this many physics steps
      * (same spawn / min-sim gates as velocity stuck). Catches crawling / jitter with no net gain.
      */
@@ -118,9 +126,9 @@ public class Car {
     }
 
     /**
-     * True if the car is stuck: either nearly still long enough (velocity gate), or anchor
-     * progress has not improved for {@link #STUCK_PLATEAU_STEPS} physics steps. Not at spawn (until
-     * forward motion / past start line) and not at the goal. Call each tick.
+     * True if the car is stuck: nearly still long enough (velocity gate), or no progress
+     * improvement for {@link #STUCK_PLATEAU_STEPS} steps. Spawn line can be bypassed after
+     * {@link #STUCK_UNGATED_AFTER_SIM_TIME} if progress is still tiny. Not at the goal. Call each tick.
      */
     public boolean testStuckNotMoving(float dt, float simTime) {
         float vx = body.getBody().getLinearVelocity().x;
@@ -138,8 +146,10 @@ public class Car {
 
         final boolean pastSpawnGate = forwardMotionStarted
                 || rearWheel.getX() > startX + STUCK_PAST_SPAWN_EPS;
+        final boolean stuckChecksActive = pastSpawnGate
+                || (simTime >= STUCK_UNGATED_AFTER_SIM_TIME && p <= STUCK_UNGATED_MAX_PROGRESS);
 
-        if (simTime >= STUCK_MIN_SIM_TIME && pastSpawnGate) {
+        if (simTime >= STUCK_MIN_SIM_TIME && stuckChecksActive) {
             if (plateauPeakProgress < 0f) {
                 plateauPeakProgress = p;
                 stepsWithoutProgressImprovement = 0;
@@ -161,11 +171,15 @@ public class Car {
             notMovingAccum = 0f;
             return false;
         }
-        if (!pastSpawnGate) {
+        if (!stuckChecksActive) {
             notMovingAccum = 0f;
             return false;
         }
-        float speed = body.getBody().getLinearVelocity().length();
+        // Use chassis and wheel-center linear speed (wheels can spin in place while blocked).
+        float bodySpeed = body.getBody().getLinearVelocity().length();
+        float wheelLin = 0.5f * (rearWheel.getBody().getLinearVelocity().length()
+                + frontWheel.getBody().getLinearVelocity().length());
+        float speed = Math.max(bodySpeed, wheelLin);
         if (speed < STUCK_SPEED_THRESHOLD) {
             notMovingAccum += dt;
         } else {
