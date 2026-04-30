@@ -94,26 +94,36 @@ public final class HeadlessSimulation {
         Path out = Paths.get("res", "simulations", uuid + ".json");
         String endReason;
         boolean crashed;
+        boolean fell;
         if (session.isSessionFinished()) {
             SessionEndReason r = session.getSessionEndReason();
             if (r == SessionEndReason.CRASH) {
                 endReason = "crash";
                 crashed = true;
+                fell = false;
+            } else if (r == SessionEndReason.FELL) {
+                endReason = "fell";
+                crashed = false;
+                fell = true;
             } else if (r == SessionEndReason.STUCK) {
                 endReason = "stuck";
                 crashed = false;
+                fell = false;
             } else if (r == SessionEndReason.FINISH) {
                 endReason = "finish";
                 crashed = false;
+                fell = false;
             } else {
                 endReason = "finish";
                 crashed = false;
+                fell = false;
             }
         } else {
             endReason = "max_steps";
             crashed = false;
+            fell = false;
         }
-        SimulationRunJson.RunEnd re = new SimulationRunJson.RunEnd(session.isSessionFinished(), endReason, crashed);
+        SimulationRunJson.RunEnd re = new SimulationRunJson.RunEnd(session.isSessionFinished(), endReason, crashed, fell);
         try {
             SimulationRunJson.writeFile(out, levelName, level.getAnchorSpanMinX(), level.getAnchorSpanMaxX(),
                     session.getRecordingSamples(), re, new SimulationRunJson.HeadlessTimesteps(maxSteps, step));

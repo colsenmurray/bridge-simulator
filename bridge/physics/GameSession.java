@@ -44,7 +44,9 @@ public class GameSession {
     private SessionEndReason sessionEndReason = SessionEndReason.RUNNING;
     /** Set during {@code world.step} when the chassis hits terrain; applied after the step. */
     private boolean pendingTerrainCrash = false;
-    private static final float MIN_TIME_BEFORE_TERRAIN_CRASH = 0.1f;
+    /** Set during {@code world.step} when a wheel or chassis hits pit floor; applied after the step. */
+    private boolean pendingPitFall = false;
+    private static final float MIN_TIME_BEFORE_TERRAIN_END = 0.1f;
 
     public GameSession(SimulationEndListener sessionEndListener, Box2D box2d, Level level) {
         this.sessionEndListener = sessionEndListener;
@@ -67,10 +69,20 @@ public class GameSession {
      * Called from {@link CarTerrainContactListener} when the car body first contacts terrain.
      */
     public void markPendingTerrainCrash() {
-        if (finished || simTime < MIN_TIME_BEFORE_TERRAIN_CRASH) {
+        if (finished || simTime < MIN_TIME_BEFORE_TERRAIN_END) {
             return;
         }
         pendingTerrainCrash = true;
+    }
+
+    /**
+     * Called from {@link CarTerrainContactListener} when a wheel or body first contacts pit floor.
+     */
+    public void markPendingPitFall() {
+        if (finished || simTime < MIN_TIME_BEFORE_TERRAIN_END) {
+            return;
+        }
+        pendingPitFall = true;
     }
 
     public Level getLevel() {
@@ -149,6 +161,12 @@ public class GameSession {
         finished = true;
     }
 
+    private void endSessionFell() {
+        sessionEndReason = SessionEndReason.FELL;
+        sessionEndListener.onSessionEnd(false, getTotalPrice(), sessionEndReason);
+        finished = true;
+    }
+
     private void endSessionStuck() {
         sessionEndReason = SessionEndReason.STUCK;
         sessionEndListener.onSessionEnd(false, getTotalPrice(), sessionEndReason);
@@ -214,7 +232,11 @@ public class GameSession {
                         car.getRearWheelX(), dt));
             }
             if (!finished) {
-                if (pendingTerrainCrash) {
+                if (pendingPitFall) {
+                    endSessionFell();
+                    pendingPitFall = false;
+                    pendingTerrainCrash = false;
+                } else if (pendingTerrainCrash) {
                     endSessionCrash();
                     pendingTerrainCrash = false;
                 } else if (car.testStuckNotMoving(dt, simTime)) {

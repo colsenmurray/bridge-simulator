@@ -7,7 +7,7 @@ import org.jbox2d.dynamics.contacts.Contact;
 import org.jbox2d.dynamics.Fixture;
 
 /**
- * Detects when the car chassis (not just wheels) hits the river-bank / terrain polyline.
+ * Detects when the car hits river-bank terrain (crash) or the pit floor (fell).
  */
 public class CarTerrainContactListener implements ContactListener {
 
@@ -24,21 +24,39 @@ public class CarTerrainContactListener implements ContactListener {
         }
         Fixture a = contact.getFixtureA();
         Fixture b = contact.getFixtureB();
-        if (isChassisAndTerrain(a, b)) {
+        if (isCarAndPitFloor(a, b)) {
+            session.markPendingPitFall();
+        } else if (isChassisAndOrdinaryTerrain(a, b)) {
             session.markPendingTerrainCrash();
         }
     }
 
-    private static boolean isChassisAndTerrain(Fixture a, Fixture b) {
-        return (isChassis(a) && isTerrain(b)) || (isChassis(b) && isTerrain(a));
+    private static boolean isCarAndPitFloor(Fixture a, Fixture b) {
+        return (isCarPart(a) && isPitTerrain(b)) || (isCarPart(b) && isPitTerrain(a));
+    }
+
+    private static boolean isChassisAndOrdinaryTerrain(Fixture a, Fixture b) {
+        return (isChassis(a) && isOrdinaryTerrain(b)) || (isChassis(b) && isOrdinaryTerrain(a));
+    }
+
+    private static boolean isCarPart(Fixture f) {
+        return isChassis(f) || isWheel(f);
     }
 
     private static boolean isChassis(Fixture f) {
         return f.getUserData() == FixtureUserData.CAR_BODY;
     }
 
-    private static boolean isTerrain(Fixture f) {
+    private static boolean isWheel(Fixture f) {
+        return f.getUserData() == FixtureUserData.CAR_WHEEL;
+    }
+
+    private static boolean isOrdinaryTerrain(Fixture f) {
         return f.getUserData() == FixtureUserData.TERRAIN;
+    }
+
+    private static boolean isPitTerrain(Fixture f) {
+        return f.getUserData() == FixtureUserData.PIT_TERRAIN;
     }
 
     @Override

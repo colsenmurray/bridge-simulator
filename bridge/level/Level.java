@@ -337,6 +337,11 @@ public class Level implements Serializable {
     }
 
     private static final float TERRAIN_Y_AT_X_EPS = 1e-4f;
+    private static final float PIT_FLOOR_MAX_SLOPE = 1.2f;
+    private static final float PIT_FLOOR_MIN_AXIAL_DX = 0.08f;
+    private static final float PIT_FLOOR_BELOW_BANK = 0.2f;
+    private static final float PIT_FLOOR_ANCHOR_MARGIN = 0.15f;
+    private static final float PIT_FLOOR_VTX_EPS = 0.01f;
 
     /**
      * Y of a bridge joint with minimal x in {@code posLiaisons}. First with that x. Degenerate: car
@@ -443,6 +448,61 @@ public class Level implements Serializable {
             return a.y + u * (b.y - a.y);
         }
         return 0.5f * (t.get(p0).y + t.get(pEnd).y);
+    }
+
+    private static boolean vec2Near(Vec2 a, Vec2 b) {
+        return Math.abs(a.x - b.x) <= PIT_FLOOR_VTX_EPS && Math.abs(a.y - b.y) <= PIT_FLOOR_VTX_EPS;
+    }
+
+    /**
+     * True if the segment between two consecutive terrain points is the river pit floor: horizontal-ish,
+     * lies below the approach road, and its x-range meets the bridge anchor span. Used to tag
+     * {@code PIT_TERRAIN} in {@link bridge.physics.environment.RiverBank}.
+     */
+    public boolean isPitFloorSegment(Vec2 a, Vec2 b) {
+        LinkedList<Vec2> t = getTerrainPoints();
+        if (t.size() < 5) {
+            return false;
+        }
+        int p0 = 2;
+        int pEnd = t.size() - 3;
+        int edgeStart = -1;
+        for (int i = p0; i < pEnd; i++) {
+            if ((vec2Near(a, t.get(i)) && vec2Near(b, t.get(i + 1)))
+                    || (vec2Near(a, t.get(i + 1)) && vec2Near(b, t.get(i)))) {
+                edgeStart = i;
+                break;
+            }
+        }
+        if (edgeStart < 0) {
+            return false;
+        }
+        Vec2 u0 = t.get(edgeStart);
+        Vec2 u1 = t.get(edgeStart + 1);
+        float yBank = Math.min(t.get(2).y, t.get(pEnd).y);
+        if (u0.y >= yBank - PIT_FLOOR_BELOW_BANK || u1.y >= yBank - PIT_FLOOR_BELOW_BANK) {
+            return false;
+        }
+        float segMinX = Math.min(u0.x, u1.x);
+        float segMaxX = Math.max(u0.x, u1.x);
+        float am = getAnchorSpanMinX() + PIT_FLOOR_ANCHOR_MARGIN;
+        float aM = getAnchorSpanMaxX() - PIT_FLOOR_ANCHOR_MARGIN;
+        if (aM - am < ANCHOR_SPAN_EPS) {
+            return false;
+        }
+        if (Math.max(am, segMinX) >= Math.min(aM, segMaxX) - 1e-3f) {
+            return false;
+        }
+        float dx = u1.x - u0.x;
+        float dy = u1.y - u0.y;
+        float adx = Math.abs(dx);
+        if (adx < PIT_FLOOR_MIN_AXIAL_DX) {
+            return false;
+        }
+        if (Math.abs(dy) / adx > PIT_FLOOR_MAX_SLOPE) {
+            return false;
+        }
+        return true;
     }
 
 }

@@ -544,6 +544,14 @@ public class GamePanel extends JPanel implements ActionListener, MouseInputListe
             JOptionPane.showMessageDialog(mainFrame, text, title, JOptionPane.PLAIN_MESSAGE);
             return;
         }
+        if (reason == SessionEndReason.FELL) {
+            String title = "Fell in the river";
+            String text = "The car fell to the bottom of the pit on level " + getSelectedLevelName() + ".";
+            text += "\n\n" + "Price: " + Integer.toString(session.getTotalPrice()) + " $";
+            text += "\n\n" + "You can try again by clicking " + restartButton.getText() + ".";
+            JOptionPane.showMessageDialog(mainFrame, text, title, JOptionPane.PLAIN_MESSAGE);
+            return;
+        }
         if (reason == SessionEndReason.STUCK) {
             String title = "Car stopped";
             String text = "The car is not moving on level " + getSelectedLevelName() + ".";

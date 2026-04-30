@@ -14,7 +14,7 @@ import bridge.physics.SessionEndReason;
 public final class SimulationRunJson {
 
     public static final String FORMAT = "bridge-simulator-simulation-run";
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
 
     private SimulationRunJson() {
     }
@@ -43,11 +43,17 @@ public final class SimulationRunJson {
         public final boolean sessionFinished;
         public final String endReason;
         public final boolean crashed;
+        public final boolean fell;
 
         public RunEnd(boolean sessionFinished, String endReason, boolean crashed) {
+            this(sessionFinished, endReason, crashed, false);
+        }
+
+        public RunEnd(boolean sessionFinished, String endReason, boolean crashed, boolean fell) {
             this.sessionFinished = sessionFinished;
             this.endReason = endReason;
             this.crashed = crashed;
+            this.fell = fell;
         }
     }
 
@@ -86,24 +92,27 @@ public final class SimulationRunJson {
      */
     public static RunEnd runEndFromSession(boolean sessionFinished, SessionEndReason reason) {
         if (!sessionFinished) {
-            return new RunEnd(false, "running", false);
+            return new RunEnd(false, "running", false, false);
         }
         if (reason == SessionEndReason.CRASH) {
-            return new RunEnd(true, "crash", true);
+            return new RunEnd(true, "crash", true, false);
+        }
+        if (reason == SessionEndReason.FELL) {
+            return new RunEnd(true, "fell", false, true);
         }
         if (reason == SessionEndReason.STUCK) {
-            return new RunEnd(true, "stuck", false);
+            return new RunEnd(true, "stuck", false, false);
         }
         if (reason == SessionEndReason.FINISH) {
-            return new RunEnd(true, "finish", false);
+            return new RunEnd(true, "finish", false, false);
         }
         if (reason == SessionEndReason.MAX_STEPS) {
-            return new RunEnd(false, "max_steps", false);
+            return new RunEnd(false, "max_steps", false, false);
         }
         if (reason == SessionEndReason.RUNNING) {
-            return new RunEnd(false, "running", false);
+            return new RunEnd(false, "running", false, false);
         }
-        return new RunEnd(true, "unknown", false);
+        return new RunEnd(true, "unknown", false, false);
     }
 
     private static String toJson(String levelName, float anchorMinX, float anchorMaxX, List<Sample> samples,
@@ -123,6 +132,7 @@ public final class SimulationRunJson {
             sb.append("  \"endReason\": \"").append(escape(runEnd.endReason != null ? runEnd.endReason : ""))
                     .append("\",\n");
             sb.append("  \"crashed\": ").append(runEnd.crashed).append(",\n");
+            sb.append("  \"fell\": ").append(runEnd.fell).append(",\n");
         }
         sb.append("  \"anchorSpan\": {\n");
         sb.append("    \"minX\": ").append(anchorMinX).append(",\n");

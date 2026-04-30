@@ -33,9 +33,11 @@ public class RiverBank extends PhysicsObject {
     private Color fillColor = Color.decode("#49a03f");
     private Color outlineColor = Color.BLACK;
 
+    private final Level level;
     private LinkedList<Vec2> terrainPoints;
 
     public RiverBank(World world, Level level) {
+        this.level = level;
         terrainPoints = level.getTerrainPoints();
         createPhysicsObject(world);
     }
@@ -55,7 +57,8 @@ public class RiverBank extends PhysicsObject {
                 shape.set(prev, point);
                 fixtureDef.shape = shape;
                 Fixture fixture = edgeBody.createFixture(fixtureDef);
-                fixture.setUserData(FixtureUserData.TERRAIN);
+                boolean pit = level.isPitFloorSegment(prev, point);
+                fixture.setUserData(pit ? FixtureUserData.PIT_TERRAIN : FixtureUserData.TERRAIN);
             }
             prev = point;
         }
