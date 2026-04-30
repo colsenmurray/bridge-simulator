@@ -1,4 +1,4 @@
-from genome import Genome
+from genetic_algorithm.genome import Genome
 import tempfile
 import json
 import subprocess
@@ -6,7 +6,7 @@ import os
 
 MAX_COST = 300_000
 
-def evaluate(genome: Genome):
+def evaluate_fitness(genome: Genome, level_name: str = "01"):
     temp_path = None
     output_path = None
 
@@ -20,7 +20,7 @@ def evaluate(genome: Genome):
         # BRIDGE_PATH = os.path.join(BASE_DIR, '..', 'res', 'bridges', '01.json')
 
         result = subprocess.run(
-            [EXEC_PATH, '--level', '01', '--bridge', temp_path, '--max-steps', '500'],
+            [EXEC_PATH, '--level', level_name, '--bridge', temp_path, '--max-steps', '500'],
             capture_output=True,
             text=True
         )
@@ -49,3 +49,11 @@ def evaluate(genome: Genome):
 
         if output_path and os.path.exists(output_path):
             os.remove(output_path)
+
+def evaluate(genome: Genome, level_name: str = "01"):
+    return evaluate_fitness(genome, level_name=level_name)
+
+if __name__ == "__main__":
+    genome = Genome(bridge_json_path="res/bridges/01_broken.json")
+    fitness = evaluate_fitness(genome, "01")
+    print(fitness)

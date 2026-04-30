@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.UUID;
 
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.collision.shapes.Shape;
@@ -55,6 +56,13 @@ public abstract class Beam extends PhysicsObject {
     protected float maxForce = 500f;
     protected int materialUnitPrice = 1000;
 
+    /**
+     * Stable id for save/export and GA bookkeeping.
+     * <p>
+     * null/empty means "unassigned".
+     */
+    private String uuid;
+
     protected Beam(World world, Node node1, Node node2) {
         linkedNodes = new ArrayList<Node>(2);
         revoluteJoints = new ArrayList<RevoluteJoint>(2);
@@ -63,6 +71,21 @@ public abstract class Beam extends PhysicsObject {
 
         createPhysicsObject(world);
         adjustPosition();
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public String ensureUuid() {
+        if (uuid == null || uuid.isEmpty()) {
+            uuid = UUID.randomUUID().toString();
+        }
+        return uuid;
     }
 
     public int getPrice() {

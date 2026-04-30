@@ -3,6 +3,7 @@ package bridge.physics.nodes;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.LinkedList;
+import java.util.UUID;
 
 import org.jbox2d.collision.shapes.CircleShape;
 import org.jbox2d.common.Vec2;
@@ -26,6 +27,13 @@ public abstract class Node extends PhysicsObject {
     public static final float RADIUS = 0.5f;
     private static final float CLICK_RADIUS = RADIUS * 3;
 
+    /**
+     * Stable id for save/export and GA bookkeeping.
+     * <p>
+     * null/empty means "unassigned".
+     */
+    private String uuid;
+
     protected Color fillColor;
     private Color hoverColor;
     private Color outlineColor;
@@ -41,6 +49,21 @@ public abstract class Node extends PhysicsObject {
 
         createPhysicsObject(world);
         setPos(pos);
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public String ensureUuid() {
+        if (uuid == null || uuid.isEmpty()) {
+            uuid = UUID.randomUUID().toString();
+        }
+        return uuid;
     }
 
     protected void createPhysicsObject(World world, BodyType bodyType) {

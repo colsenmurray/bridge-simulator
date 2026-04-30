@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,12 +36,20 @@ public final class BridgeJson {
             "\"material\"\\s*:\\s*\"(ASPHALT|WOOD|STEEL)\"\\s*,\\s*"
                     + "\"a\"\\s*:\\s*\\{\\s*\"x\"\\s*:\\s*([^,\\s]+)\\s*,\\s*\"y\"\\s*:\\s*([^}]+?)\\s*\\}\\s*,\\s*"
                     + "\"b\"\\s*:\\s*\\{\\s*\"x\"\\s*:\\s*([^,\\s]+)\\s*,\\s*\"y\"\\s*:\\s*([^}]+?)\\s*\\}");
-    /** Joint: "x": n, "y": n, "fixed": true|false */
+    /**
+     * Joint: {@code "x": n, "y": n, "fixed": true|false}. Optional extra fields (e.g. GA metadata like
+     * {@code "uuid"}) may appear after {@code fixed}.
+     */
     private static final Pattern JOINT_PATTERN = Pattern.compile(
-            "\"x\"\\s*:\\s*([^,\\s]+)\\s*,\\s*\"y\"\\s*:\\s*([^,\\s]+)\\s*,\\s*\"fixed\"\\s*:\\s*(true|false)");
-    /** Edge: "from": n, "to": n, "material": "WOOD" */
+            "\"x\"\\s*:\\s*([^,\\s]+)\\s*,\\s*\"y\"\\s*:\\s*([^,\\s]+)\\s*,\\s*\"fixed\"\\s*:\\s*(true|false)(?:\\s*,\\s*\"[^\"]+\"\\s*:[^,}]+)*");
+    /**
+     * Edge: {@code "from": n, "to": n, "material": "WOOD"}. Optional extra fields may appear after
+     * {@code material}.
+     */
     private static final Pattern EDGE_PATTERN = Pattern.compile(
-            "\"from\"\\s*:\\s*(\\d+)\\s*,\\s*\"to\"\\s*:\\s*(\\d+)\\s*,\\s*\"material\"\\s*:\\s*\"(ASPHALT|WOOD|STEEL)\"");
+            "\"from\"\\s*:\\s*(\\d+)\\s*,\\s*\"to\"\\s*:\\s*(\\d+)\\s*,\\s*\"material\"\\s*:\\s*\"(ASPHALT|WOOD|STEEL)\"(?:\\s*,\\s*\"[^\"]+\"\\s*:[^,}]+)*");
+
+    private static final Pattern UUID_PATTERN = Pattern.compile("\"uuid\"\\s*:\\s*(?:\"([^\"]+)\"|(\\d+))");
 
     private BridgeJson() {
     }
@@ -64,6 +73,7 @@ public final class BridgeJson {
             sb.append("\"x\": ").append(p.x).append(", ");
             sb.append("\"y\": ").append(p.y).append(", ");
             sb.append("\"fixed\": ").append(t.isFixed(i));
+            sb.append(", \"uuid\": \"").append(escape(t.getJointUuid(i))).append("\"");
             sb.append(" }");
             if (i < t.getJointCount() - 1) {
                 sb.append(",");
@@ -79,6 +89,7 @@ public final class BridgeJson {
             sb.append("\"from\": ").append(e.getFromJoint()).append(", ");
             sb.append("\"to\": ").append(e.getToJoint()).append(", ");
             sb.append("\"material\": \"").append(e.getMaterial().name()).append("\"");
+            sb.append(", \"uuid\": \"").append(escape(e.getUuid())).append("\"");
             sb.append(" }");
             if (i < edges.size() - 1) {
                 sb.append(",");
@@ -131,6 +142,7 @@ public final class BridgeJson {
             throw new IOException("Missing joints array");
         }
         ArrayList<Vec2> joints = new ArrayList<>();
+        ArrayList<String> jointUuids = new ArrayList<>();
         BitSet fixed = new BitSet();
         Matcher jm = JOINT_PATTERN.matcher(jointsInner);
         int ji = 0;
@@ -143,9 +155,20 @@ public final class BridgeJson {
                 if (isFixed) {
                     fixed.set(ji);
                 }
+                String uuid = null;
+                Matcher um = UUID_PATTERN.matcher(jm.group());
+                if (um.find()) {
+                    uuid = um.group(1) != null ? um.group(1) : um.group(2);
+                }
+                jointUuids.add(uuid);
                 ji++;
             } catch (IllegalArgumentException e) {
                 throw new IOException("Invalid joint entry", e);
+            }
+        }
+        for (int i = 0; i < jointUuids.size(); i++) {
+            if (jointUuids.get(i) == null || jointUuids.get(i).isEmpty()) {
+                jointUuids.set(i, UUID.randomUUID().toString());
             }
         }
         ArrayList<BridgeEdge> edges = new ArrayList<>();
@@ -162,13 +185,21 @@ public final class BridgeJson {
                     if (from == to) {
                         continue;
                     }
-                    edges.add(new BridgeEdge(from, to, mat));
+                    String edgeUuid = null;
+                    Matcher um = UUID_PATTERN.matcher(em.group());
+                    if (um.find()) {
+                        edgeUuid = um.group(1) != null ? um.group(1) : um.group(2);
+                    }
+                    if (edgeUuid == null || edgeUuid.isEmpty()) {
+                        edgeUuid = UUID.randomUUID().toString();
+                    }
+                    edges.add(new BridgeEdge(from, to, mat, edgeUuid));
                 } catch (IllegalArgumentException e) {
                     throw new IOException("Invalid edge entry", e);
                 }
             }
         }
-        BridgeTopology topology = new BridgeTopology(joints, fixed, edges);
+        BridgeTopology topology = new BridgeTopology(joints, jointUuids, fixed, edges);
         return new BridgeSaveFile(version, fingerprint, topology, cost);
     }
 

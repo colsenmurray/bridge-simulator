@@ -48,7 +48,9 @@ public class Bridge implements Serializable {
         jointNodes = new ArrayList<>();
 
         for (Vec2 pos : level.getNodePositions()) {
-            jointNodes.add(new FixedNode(world, pos));
+            Node n = new FixedNode(world, pos);
+            n.ensureUuid();
+            jointNodes.add(n);
         }
     }
 
@@ -219,6 +221,7 @@ public class Bridge implements Serializable {
 
     private void createBeam(World world, Vec2 clickPos, Node clickedNode, Material material) {
         mobileNodeInProgress = new MobileNode(world, clickPos);
+        mobileNodeInProgress.ensureUuid();
         jointNodes.add(mobileNodeInProgress);
 
         Node a = clickedNode;
@@ -236,6 +239,7 @@ public class Bridge implements Serializable {
                 break;
         }
 
+        beamInProgress.ensureUuid();
         beams.add(beamInProgress);
     }
 
@@ -243,6 +247,9 @@ public class Bridge implements Serializable {
         for (Beam beam : beams) {
             if (beam != beamInProgress) {
                 LinkedList<Node> created = beam.testBreak(world, dt);
+                for (Node n : created) {
+                    n.ensureUuid();
+                }
                 jointNodes.addAll(created);
             }
         }
@@ -278,11 +285,13 @@ public class Bridge implements Serializable {
             }
         }
         ArrayList<Vec2> jointPositions = new ArrayList<>(active.size());
+        ArrayList<String> jointUuids = new ArrayList<>(active.size());
         java.util.BitSet fixed = new java.util.BitSet();
         Map<Node, Integer> nodeToIndex = new HashMap<>();
         for (int i = 0; i < active.size(); i++) {
             Node n = active.get(i);
             jointPositions.add(n.getPos().clone());
+            jointUuids.add(n.ensureUuid());
             if (n instanceof FixedNode) {
                 fixed.set(i);
             }
@@ -300,9 +309,9 @@ public class Bridge implements Serializable {
             if (ia == null || ib == null) {
                 continue;
             }
-            edgeList.add(new BridgeEdge(ia, ib, materialOf(beam)));
+            edgeList.add(new BridgeEdge(ia, ib, materialOf(beam), beam.ensureUuid()));
         }
-        return new BridgeTopology(jointPositions, fixed, edgeList);
+        return new BridgeTopology(jointPositions, jointUuids, fixed, edgeList);
     }
 
     /**
@@ -341,10 +350,15 @@ public class Bridge implements Serializable {
 
         for (int i = 0; i < topology.getJointCount(); i++) {
             Vec2 p = topology.getJoint(i);
+            String uuid = topology.getJointUuid(i);
             if (topology.isFixed(i)) {
-                jointNodes.add(new FixedNode(world, p.clone()));
+                Node n = new FixedNode(world, p.clone());
+                n.setUuid(uuid);
+                jointNodes.add(n);
             } else {
-                jointNodes.add(new MobileNode(world, p.clone()));
+                Node n = new MobileNode(world, p.clone());
+                n.setUuid(uuid);
+                jointNodes.add(n);
             }
         }
         for (BridgeEdge e : topology.getEdges()) {
@@ -357,6 +371,7 @@ public class Bridge implements Serializable {
                 continue;
             }
             Beam beam = createBeamOfMaterial(world, a, b, e.getMaterial());
+            beam.setUuid(e.getUuid());
             beams.add(beam);
             beam.activatePhysics();
             for (Node n : beam.getLinkedNodes()) {

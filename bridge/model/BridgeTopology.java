@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import org.jbox2d.common.Vec2;
 
@@ -19,16 +20,43 @@ public final class BridgeTopology {
     private static final float POSITION_EPS = 0.05f;
 
     private final ArrayList<Vec2> jointPositions;
+    private final ArrayList<String> jointUuids;
     private final BitSet fixedJoints;
     private final ArrayList<BridgeEdge> edges;
 
     public BridgeTopology(ArrayList<Vec2> jointPositions, BitSet fixedJoints, ArrayList<BridgeEdge> edges) {
+        this(jointPositions, null, fixedJoints, edges);
+    }
+
+    public BridgeTopology(ArrayList<Vec2> jointPositions, ArrayList<String> jointUuids, BitSet fixedJoints,
+            ArrayList<BridgeEdge> edges) {
         this.jointPositions = new ArrayList<>(jointPositions.size());
         for (Vec2 p : jointPositions) {
             this.jointPositions.add(p.clone());
         }
+        this.jointUuids = new ArrayList<>(jointPositions.size());
+        if (jointUuids != null && jointUuids.size() == jointPositions.size()) {
+            for (String u : jointUuids) {
+                if (u == null || u.isEmpty()) {
+                    this.jointUuids.add(UUID.randomUUID().toString());
+                } else {
+                    this.jointUuids.add(u);
+                }
+            }
+        } else {
+            for (int i = 0; i < jointPositions.size(); i++) {
+                this.jointUuids.add(UUID.randomUUID().toString());
+            }
+        }
         this.fixedJoints = (BitSet) fixedJoints.clone();
-        this.edges = new ArrayList<>(edges);
+        this.edges = new ArrayList<>(edges.size());
+        for (BridgeEdge e : edges) {
+            String u = e.getUuid();
+            if (u == null || u.isEmpty()) {
+                u = UUID.randomUUID().toString();
+            }
+            this.edges.add(new BridgeEdge(e.getFromJoint(), e.getToJoint(), e.getMaterial(), u));
+        }
     }
 
     public int getJointCount() {
@@ -37,6 +65,10 @@ public final class BridgeTopology {
 
     public Vec2 getJoint(int index) {
         return jointPositions.get(index).clone();
+    }
+
+    public String getJointUuid(int index) {
+        return jointUuids.get(index);
     }
 
     public boolean isFixed(int jointIndex) {
@@ -66,7 +98,7 @@ public final class BridgeTopology {
             }
             next.add(p);
         }
-        return new BridgeTopology(next, fixedJoints, edges);
+        return new BridgeTopology(next, jointUuids, fixedJoints, edges);
     }
 
     /**
@@ -84,7 +116,7 @@ public final class BridgeTopology {
                 next.add(jointPositions.get(i).clone());
             }
         }
-        return new BridgeTopology(next, fixedJoints, edges);
+        return new BridgeTopology(next, jointUuids, fixedJoints, edges);
     }
 
     public List<BeamRecord> toBeamRecords() {
@@ -102,12 +134,13 @@ public final class BridgeTopology {
      */
     public static BridgeTopology fromBeamRecords(List<BeamRecord> records, Level level) {
         ArrayList<Vec2> joints = new ArrayList<>();
+        ArrayList<String> jointUuids = new ArrayList<>();
         BitSet fixed = new BitSet();
         ArrayList<BridgeEdge> edgeList = new ArrayList<>();
 
         for (BeamRecord rec : records) {
-            int ia = indexOfOrAdd(joints, fixed, level, rec.getA());
-            int ib = indexOfOrAdd(joints, fixed, level, rec.getB());
+            int ia = indexOfOrAdd(joints, jointUuids, fixed, level, rec.getA());
+            int ib = indexOfOrAdd(joints, jointUuids, fixed, level, rec.getB());
             if (ia == ib) {
                 continue;
             }
@@ -116,7 +149,7 @@ public final class BridgeTopology {
             }
             edgeList.add(new BridgeEdge(ia, ib, rec.getMaterial()));
         }
-        return new BridgeTopology(joints, fixed, edgeList);
+        return new BridgeTopology(joints, jointUuids, fixed, edgeList);
     }
 
     private static boolean hasEdge(List<BridgeEdge> edgeList, int a, int b) {
@@ -131,7 +164,8 @@ public final class BridgeTopology {
         return false;
     }
 
-    private static int indexOfOrAdd(ArrayList<Vec2> joints, BitSet fixed, Level level, Vec2 pos) {
+    private static int indexOfOrAdd(ArrayList<Vec2> joints, ArrayList<String> jointUuids, BitSet fixed, Level level,
+            Vec2 pos) {
         for (int i = 0; i < joints.size(); i++) {
             if (joints.get(i).sub(pos).length() < POSITION_EPS) {
                 return i;
@@ -139,6 +173,7 @@ public final class BridgeTopology {
         }
         int idx = joints.size();
         joints.add(pos.clone());
+        jointUuids.add(UUID.randomUUID().toString());
         if (matchesLevelAnchor(level, pos)) {
             fixed.set(idx);
         }
@@ -162,13 +197,15 @@ public final class BridgeTopology {
      */
     public static BridgeTopology empty(Level level) {
         ArrayList<Vec2> joints = new ArrayList<>();
+        ArrayList<String> jointUuids = new ArrayList<>();
         BitSet fixed = new BitSet();
         for (Vec2 p : level.getNodePositions()) {
             int i = joints.size();
             joints.add(p.clone());
+            jointUuids.add(UUID.randomUUID().toString());
             fixed.set(i);
         }
-        return new BridgeTopology(joints, fixed, new ArrayList<>());
+        return new BridgeTopology(joints, jointUuids, fixed, new ArrayList<>());
     }
 
 }
