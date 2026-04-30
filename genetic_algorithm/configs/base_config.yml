@@ -1,9 +1,9 @@
 population_size: 24
 generations: 100
-crossover_rate: 0.01
-mutation_rate: 0.02
+crossover_rate: 0.1
+mutation_rate: 0.2
 tournament_size: 3
 elitism: 2
 seed: 42
-level: "09"
-initial_individual: "res/bridges/01.json"
+level: "02"
+initial_individual: "res/bridges/02_bulk.json"

@@ -4,14 +4,14 @@
   "levelFingerprint": "eb8f1fcdd9ae80ea23c3141c134f6f4acb3d3a154240d76a80c19f3a0c7e9930",
   "cost": 6000,
   "joints": [
-    { "x": 39.34375, "y": 30.0, "fixed": true },
-    { "x": 51.15625, "y": 25.9375, "fixed": true },
-    { "x": 60.84375, "y": 31.25, "fixed": true },
-    { "x": 47.336113, "y": 30.349455, "fixed": false },
-    { "x": 55.31845, "y": 30.880764, "fixed": false }
+    { "x": 39.34375, "y": 30.0, "fixed": true, "uuid": "949a79d0-4b7d-4556-bfa5-386797fe39de" },
+    { "x": 51.15625, "y": 25.9375, "fixed": true, "uuid": "edff4699-1c92-43bb-8645-432960bf69d7" },
+    { "x": 60.84375, "y": 31.25, "fixed": true, "uuid": "be8fb008-cf2a-4a48-9561-a67ef586ad36" },
+    { "x": 47.311646, "y": 30.715965, "fixed": false, "uuid": "a2e3e817-272c-4d96-a7ba-1ffd1ab8cd79" },
+    { "x": 55.27602, "y": 31.470097, "fixed": false, "uuid": "bd13e833-878f-465d-8761-ab6ae107049b" }
   ],
   "edges": [
-    { "from": 0, "to": 3, "material": "ASPHALT" },
-    { "from": 3, "to": 4, "material": "ASPHALT" }
+    { "from": 0, "to": 3, "material": "ASPHALT", "uuid": "64f17b06-b0ac-4df3-b2f6-e59ca601ac6b", "from_uuid": "949a79d0-4b7d-4556-bfa5-386797fe39de", "to_uuid": "a2e3e817-272c-4d96-a7ba-1ffd1ab8cd79" },
+    { "from": 3, "to": 4, "material": "ASPHALT", "uuid": "21d1cf42-6ee2-4e52-8402-85c41c2085de", "from_uuid": "a2e3e817-272c-4d96-a7ba-1ffd1ab8cd79", "to_uuid": "bd13e833-878f-465d-8761-ab6ae107049b" }
   ]
 }

@@ -79,36 +79,7 @@ def _move_joint(genome: Genome, sigma: float = 1.0):
     joint['x'] += random.uniform(-sigma, sigma)
     joint['y'] += random.uniform(-sigma, sigma)
 
-# add new edge
-def _add_edge_old(genome: Genome):
-    num_joints = len(genome.joints)
-    if num_joints < 2:
-        return
-    
-    for _ in range(10):
-        i, j = random.sample(range(num_joints), 2)
 
-        if genome.edge_length(i, j) > MAX_EDGE_LEN:
-            continue
-
-        a, b = sorted((i, j))
-        duplicate = False
-
-        for edge in genome.edges:
-            a_test, b_test = sorted((edge['from'], edge['to']))
-            
-            if (a, b) == (a_test, b_test):
-                duplicate = True
-                break
-        
-        else:
-            genome.edges.append({
-                'from': i,
-                'to': j,
-                'material': 'ASPHALT'
-            })
-
-        return
 
 # add new edge from existing joint
 def _add_edge(genome: Genome):
@@ -134,7 +105,14 @@ def _add_edge(genome: Genome):
             if _edge_already_exists(genome, i, j, material):
                 continue
 
-            new_edge = {"from": i, "to": j, "material": material, "uuid": str(uuid.uuid4())}
+            new_edge = {
+                "from": i,
+                "to": j,
+                "material": material,
+                "uuid": str(uuid.uuid4()),
+                "from_uuid": str(genome.joints[i]["uuid"]),
+                "to_uuid": str(genome.joints[j]["uuid"]),
+            }
             genome.edges.append(new_edge)
             genome.edges[-1] = Genome._normalize_edge_dict(new_edge)
             return
@@ -164,6 +142,8 @@ def _add_edge(genome: Genome):
         "to": new_index,
         "material": "ASPHALT",
         "uuid": str(uuid.uuid4()),
+        "from_uuid": str(genome.joints[i]["uuid"]),
+        "to_uuid": str(new_joint["uuid"]),
     }
     genome.edges.append(new_edge)
     genome.edges[-1] = Genome._normalize_edge_dict(new_edge)
@@ -179,17 +159,57 @@ def _remove_edge(genome: Genome):
 
     genome.edges.pop(i)
 
+
+def _remove_joint(genome: Genome) -> None:
+    mutable = genome.mutable_joints()
+    if not mutable:
+        return
+
+    remove_index = random.choice(mutable)
+    removed_uuid = str(genome.joints[remove_index].get("uuid"))
+
+    # Remove joint
+    genome.joints.pop(remove_index)
+
+    # Remove edges incident to the removed joint (by uuid endpoints)
+    kept_edges: list[dict] = []
+    for e in genome.edges:
+        if str(e.get("from_uuid")) == removed_uuid or str(e.get("to_uuid")) == removed_uuid:
+            continue
+        kept_edges.append(e)
+    genome.bridge["edges"] = kept_edges
+    genome.edges = genome.bridge["edges"]
+
+    # Reindex edges based on their UUID endpoints so indices match shifted joints.
+    genome.bridge["joints"] = genome.joints
+    Genome._reindex_edges_from_uuids_inplace(genome.bridge)
+    genome.edges = genome.bridge["edges"]
+
+    # Normalize edge dicts after reindexing
+    for i in range(len(genome.edges)):
+        genome.edges[i] = Genome._normalize_edge_dict(genome.edges[i])
+
+
 # clone genome, mutate it, return new genome
 def mutate(parent: Genome):
     child = parent.clone()
-    
-    r = random.random()
 
-    if r < 0.75:
+
+    # Small continuous tweak
+    if random.random() < 0.70:
         _move_joint(child)
-    elif r < 0.9:
+
+    # Joint-structure mutation
+    r_joint = random.random()
+
+    if r_joint < 0.16:
+        _remove_joint(child)
+
+    # Edge-structure mutation
+    r_edge = random.random()
+    if r_edge < 0.15:
         _add_edge(child)
-    else:
+    elif r_edge < 0.25:
         _remove_edge(child)
 
     return child

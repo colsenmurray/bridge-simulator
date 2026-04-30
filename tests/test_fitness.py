@@ -9,7 +9,17 @@ from genetic_algorithm.genome import Genome
 def test_fitness_evaluate_sets_progress_and_cleans_temp_files(monkeypatch, tmp_path) -> None:
     # Prepare a fake simulation output file.
     out_path = tmp_path / "out.json"
-    out_path.write_text(json.dumps({"samples": [{"progress": 0.25}, {"progress": 0.75}]}))
+    out_path.write_text(
+        json.dumps(
+            {
+                "samples": [{"progress": 0.25}, {"progress": 0.75}],
+                "crashed": False,
+                "fell": False,
+                "timestepsRun": 2,
+                "maxTimesteps": 500,
+            }
+        )
+    )
 
     # Capture the temp bridge file path created by evaluate().
     created = {"temp_path": None}

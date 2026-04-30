@@ -4,7 +4,17 @@ import json
 import subprocess
 import os
 
-MAX_COST = 300_000
+MAX_COST = 30_000
+DEFAULT_MAX_STEPS = 500
+
+# Fitness weights (tune as needed)
+W_PROGRESS = 1000.0
+W_COST = 200.0
+W_TIME = 50.0
+
+# Event penalties (scaled by (1 - progress))
+PENALTY_CRASH = 800.0
+PENALTY_FALL = 1200.0
 
 def evaluate_fitness(genome: Genome, level_name: str = "01"):
     temp_path = None
@@ -33,10 +43,33 @@ def evaluate_fitness(genome: Genome, level_name: str = "01"):
         with open(output_path, "r") as f:
             output = json.load(f)
 
-        progress = output['samples'][-1]['progress']
+        samples = output.get("samples", [])
+        if not samples:
+            progress = 0.0
+            timesteps = 0
+        else:
+            progress = float(samples[-1].get("progress", 0.0))
+            timesteps = int(output.get("timestepsRun", len(samples)))
 
-        amt_over_max = max(0, genome.cost - MAX_COST) / MAX_COST
-        fitness = 100 * (progress - genome.cost / MAX_COST) - 200 * amt_over_max
+        # Event flags (backward compatible)
+        crashed = bool(output.get("crashed", False) or output.get("endReason") == "crash")
+        fell = bool(output.get("fell", False) or output.get("endReason") == "fell")
+
+        max_steps = int(output.get("maxTimesteps", DEFAULT_MAX_STEPS))
+        if max_steps <= 0:
+            max_steps = DEFAULT_MAX_STEPS
+
+        # Normalize components to ~[0,1]
+        p = max(0.0, min(1.0, progress))
+        c = min(1.0, float(getattr(genome, "cost", 0.0)) / float(MAX_COST))
+        t = min(1.0, float(timesteps) / float(max_steps))
+
+        fitness = (W_PROGRESS * p) - (W_COST * c) - (W_TIME * t)
+
+        if fell:
+            fitness -= PENALTY_FALL * (1.0 - p)
+        elif crashed:
+            fitness -= PENALTY_CRASH * (1.0 - p)
 
         genome.progress = progress
         genome.fitness = fitness

@@ -90,6 +90,8 @@ public final class BridgeJson {
             sb.append("\"to\": ").append(e.getToJoint()).append(", ");
             sb.append("\"material\": \"").append(e.getMaterial().name()).append("\"");
             sb.append(", \"uuid\": \"").append(escape(e.getUuid())).append("\"");
+            sb.append(", \"from_uuid\": \"").append(escape(t.getJointUuid(e.getFromJoint()))).append("\"");
+            sb.append(", \"to_uuid\": \"").append(escape(t.getJointUuid(e.getToJoint()))).append("\"");
             sb.append(" }");
             if (i < edges.size() - 1) {
                 sb.append(",");

@@ -58,6 +58,10 @@ class Genome:
         }
         if "uuid" in edge and edge["uuid"] is not None:
             normalized["uuid"] = str(edge["uuid"])
+        if "from_uuid" in edge and edge["from_uuid"] is not None:
+            normalized["from_uuid"] = str(edge["from_uuid"])
+        if "to_uuid" in edge and edge["to_uuid"] is not None:
+            normalized["to_uuid"] = str(edge["to_uuid"])
         return normalized
 
     @staticmethod
@@ -93,6 +97,42 @@ class Genome:
                 e["uuid"] = str(uuid.uuid4())
             else:
                 e["uuid"] = str(e["uuid"])
+
+        # Ensure every edge has from_uuid/to_uuid derived from endpoints.
+        for e in edges:
+            from_idx = int(e["from"])
+            to_idx = int(e["to"])
+            if not (0 <= from_idx < len(joints) and 0 <= to_idx < len(joints)):
+                raise ValueError("Edge references invalid joint index while deriving from_uuid/to_uuid")
+            e["from_uuid"] = str(joints[from_idx]["uuid"])
+            e["to_uuid"] = str(joints[to_idx]["uuid"])
+
+    @staticmethod
+    def _reindex_edges_from_uuids_inplace(bridge: dict[str, Any]) -> None:
+        joints: list[dict[str, Any]] = bridge.get("joints", [])
+        edges: list[dict[str, Any]] = bridge.get("edges", [])
+
+        uuid_to_index: dict[str, int] = {}
+        for i, j in enumerate(joints):
+            if j.get("uuid") is None:
+                continue
+            uuid_to_index[str(j["uuid"])] = i
+
+        kept: list[dict[str, Any]] = []
+        for e in edges:
+            fu = e.get("from_uuid")
+            tu = e.get("to_uuid")
+            if fu is None or tu is None:
+                continue
+            from_index = uuid_to_index.get(str(fu))
+            to_index = uuid_to_index.get(str(tu))
+            if from_index is None or to_index is None:
+                continue
+            e["from"] = int(from_index)
+            e["to"] = int(to_index)
+            kept.append(e)
+
+        bridge["edges"] = kept
 
     @staticmethod
     def load_from_json(bridge_json_path: str):
