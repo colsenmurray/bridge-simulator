@@ -71,3 +71,27 @@ def test_remove_joint_drops_incident_edges_and_reindexes_remaining() -> None:
     assert e["from"] == 0
     assert e["to"] == 1
 
+
+def test_prune_removes_component_without_fixed_anchor() -> None:
+    # Component 1: fixed A connected to B (keep)
+    # Component 2: floating C-D (prune)
+    g = Genome(
+        bridge_manual={
+            "joints": [
+                {"x": 0, "y": 0, "fixed": True, "uuid": "A"},
+                {"x": 1, "y": 0, "fixed": False, "uuid": "B"},
+                {"x": 10, "y": 0, "fixed": False, "uuid": "C"},
+                {"x": 11, "y": 0, "fixed": False, "uuid": "D"},
+            ],
+            "edges": [
+                {"from": 0, "to": 1, "material": "ASPHALT", "uuid": "AB"},
+                {"from": 2, "to": 3, "material": "ASPHALT", "uuid": "CD"},
+            ],
+        }
+    )
+
+    Genome.prune_components_without_fixed_anchor_inplace(g.bridge)
+    uuids = {j["uuid"] for j in g.bridge["joints"]}
+    assert uuids == {"A", "B"}
+    assert len(g.bridge["edges"]) == 1
+

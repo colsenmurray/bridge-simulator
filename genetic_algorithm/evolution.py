@@ -76,6 +76,7 @@ class Evolution:
             p1_clone = p1.clone()
             p2_clone = p2.clone()
             mutations_count = random.randint(0, 15)
+            
             for _ in range(mutations_count):
                 if random.random() < float(self.config.mutation_rate):
                     p1_clone = mutate(p1_clone)

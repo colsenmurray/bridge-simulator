@@ -212,4 +212,9 @@ def mutate(parent: Genome):
     elif r_edge < 0.25:
         _remove_edge(child)
 
+    # Prune any floating components not connected to fixed anchors.
+    Genome.prune_components_without_fixed_anchor_inplace(child.bridge)
+    child.joints = child.bridge.get("joints", [])
+    child.edges = child.bridge.get("edges", [])
+
     return child

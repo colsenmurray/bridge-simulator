@@ -170,6 +170,9 @@ def crossover(parent1: Genome, parent2: Genome) -> Genome:
     child_bridge["edges"] = child_edges
 
     child = Genome(bridge_manual=child_bridge)
+    Genome.prune_components_without_fixed_anchor_inplace(child.bridge)
+    child.joints = child.bridge.get("joints", [])
+    child.edges = child.bridge.get("edges", [])
     child.validate_bridge()
     return child
 

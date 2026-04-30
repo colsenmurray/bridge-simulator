@@ -135,6 +135,90 @@ class Genome:
         bridge["edges"] = kept
 
     @staticmethod
+    def prune_components_without_fixed_anchor_inplace(bridge: dict[str, Any]) -> None:
+        """
+        Prune any connected component (by edges) that does not contain a fixed joint.
+        Uses disjoint sets (union-find) over joint indices.
+        """
+        joints: list[dict[str, Any]] = bridge.get("joints", [])
+        edges: list[dict[str, Any]] = bridge.get("edges", [])
+        n = len(joints)
+        if n == 0:
+            bridge["edges"] = []
+            return
+
+        parent = list(range(n))
+        rank = [0] * n
+
+        def find(x: int) -> int:
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        def union(a: int, b: int) -> None:
+            ra = find(a)
+            rb = find(b)
+            if ra == rb:
+                return
+            if rank[ra] < rank[rb]:
+                parent[ra] = rb
+            elif rank[ra] > rank[rb]:
+                parent[rb] = ra
+            else:
+                parent[rb] = ra
+                rank[ra] += 1
+
+        for e in edges:
+            try:
+                a = int(e["from"])
+                b = int(e["to"])
+            except (KeyError, ValueError, TypeError):
+                continue
+            if 0 <= a < n and 0 <= b < n and a != b:
+                union(a, b)
+
+        keep_roots: set[int] = set()
+        for i, j in enumerate(joints):
+            if bool(j.get("fixed", False)):
+                keep_roots.add(find(i))
+
+        # If there are no fixed joints, keep everything (nothing to anchor to).
+        if not keep_roots:
+            return
+
+        keep_joint_mask = [find(i) in keep_roots for i in range(n)]
+        old_to_new: dict[int, int] = {}
+        new_joints: list[dict[str, Any]] = []
+        for old_i, keep in enumerate(keep_joint_mask):
+            if not keep:
+                continue
+            old_to_new[old_i] = len(new_joints)
+            new_joints.append(joints[old_i])
+
+        new_edges: list[dict[str, Any]] = []
+        for e in edges:
+            try:
+                a_old = int(e["from"])
+                b_old = int(e["to"])
+            except (KeyError, ValueError, TypeError):
+                continue
+            a_new = old_to_new.get(a_old)
+            b_new = old_to_new.get(b_old)
+            if a_new is None or b_new is None or a_new == b_new:
+                continue
+            e["from"] = int(a_new)
+            e["to"] = int(b_new)
+            new_edges.append(e)
+
+        bridge["joints"] = new_joints
+        bridge["edges"] = new_edges
+
+        # Refresh endpoint uuids to stay consistent with indices.
+        Genome._ensure_uuids_inplace(bridge)
+        Genome._normalize_bridge_inplace(bridge)
+
+    @staticmethod
     def load_from_json(bridge_json_path: str):
         with open(bridge_json_path, 'r') as f:
             return json.load(f)
