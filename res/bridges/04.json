@@ -1,0 +1,15 @@
+{
+    "format": "bridge-simulator-bridge",
+    "version": 2,
+    "levelFingerprint": "9d1d1aa515b1c63d2c8e561b5e8dd429285b7565603e0ba9bb781aecb04382d3",
+    "cost": 0,
+    "joints": [
+      { "x": 26.0625, "y": 29.0625, "fixed": true, "uuid": "28791348-7643-456c-bc75-58b5f5791731" },
+      { "x": 27.8125, "y": 24.3125, "fixed": true, "uuid": "b9599a61-b0c4-4f29-8def-8d6a42b8870d" },
+      { "x": 70.75, "y": 29.4375, "fixed": true, "uuid": "fd78d0ab-88f4-4bad-9a57-454c7acabcb1" },
+      { "x": 73.5, "y": 32.0, "fixed": true, "uuid": "2b84e268-1ebc-4c32-a4d1-bdf3a3f30bfa" }
+    ],
+    "edges": [
+    ]
+  }
+  

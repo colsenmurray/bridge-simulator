@@ -6,8 +6,11 @@ import org.jbox2d.collision.Manifold;
 import org.jbox2d.dynamics.contacts.Contact;
 import org.jbox2d.dynamics.Fixture;
 
+import bridge.level.Level;
+
 /**
  * Detects when the car hits river-bank terrain (crash) or the pit floor (fell).
+ * Disables car–beam contacts for beams sitting in the pit so the car cannot drive on fallen debris.
  */
 public class CarTerrainContactListener implements ContactListener {
 
@@ -59,12 +62,39 @@ public class CarTerrainContactListener implements ContactListener {
         return f.getUserData() == FixtureUserData.PIT_TERRAIN;
     }
 
+    private static boolean isBridgeBeam(Fixture f) {
+        return f.getUserData() == FixtureUserData.BRIDGE_BEAM;
+    }
+
     @Override
     public void endContact(Contact contact) {
     }
 
     @Override
     public void preSolve(Contact contact, Manifold oldManifold) {
+        if (session.isSessionFinished() || !session.isPhysicsRunning()) {
+            return;
+        }
+        Fixture a = contact.getFixtureA();
+        Fixture b = contact.getFixtureB();
+        Fixture beamFixture = null;
+        if (isCarPart(a) && isBridgeBeam(b)) {
+            beamFixture = b;
+        } else if (isCarPart(b) && isBridgeBeam(a)) {
+            beamFixture = a;
+        }
+        if (beamFixture == null) {
+            return;
+        }
+        Level level = session.getLevel();
+        float cutoffY = level.getPitDebrisCarCollisionMaxY();
+        if (Float.isNaN(cutoffY)) {
+            return;
+        }
+        float beamY = beamFixture.getBody().getPosition().y;
+        if (beamY <= cutoffY) {
+            contact.setEnabled(false);
+        }
     }
 
     @Override

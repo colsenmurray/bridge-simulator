@@ -342,6 +342,11 @@ public class Level implements Serializable {
     private static final float PIT_FLOOR_BELOW_BANK = 0.2f;
     private static final float PIT_FLOOR_ANCHOR_MARGIN = 0.15f;
     private static final float PIT_FLOOR_VTX_EPS = 0.01f;
+    /**
+     * Car–beam contacts are disabled when the beam body center is at or below
+     * (pit floor mean Y + this). Stops driving on debris at the bottom of the pit.
+     */
+    private static final float PIT_DEBRIS_CAR_COLLISION_Y_ABOVE_FLOOR = 2.5f;
 
     /**
      * Y of a bridge joint with minimal x in {@code posLiaisons}. First with that x. Degenerate: car
@@ -503,6 +508,38 @@ public class Level implements Serializable {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Mean Y of the pit floor segment if this level has one; otherwise NaN.
+     */
+    public float getPitFloorSurfaceYOrNaN() {
+        LinkedList<Vec2> t = getTerrainPoints();
+        if (t.size() < 5) {
+            return Float.NaN;
+        }
+        int p0 = 2;
+        int pEnd = t.size() - 3;
+        for (int i = p0; i < pEnd; i++) {
+            Vec2 u0 = t.get(i);
+            Vec2 u1 = t.get(i + 1);
+            if (isPitFloorSegment(u0, u1)) {
+                return 0.5f * (u0.y + u1.y);
+            }
+        }
+        return Float.NaN;
+    }
+
+    /**
+     * Beams with body center Y at or below this height do not collide with the car.
+     * NaN if the level has no detected pit floor (collision unchanged).
+     */
+    public float getPitDebrisCarCollisionMaxY() {
+        float py = getPitFloorSurfaceYOrNaN();
+        if (Float.isNaN(py)) {
+            return Float.NaN;
+        }
+        return py + PIT_DEBRIS_CAR_COLLISION_Y_ABOVE_FLOOR;
     }
 
 }

@@ -1,0 +1,126 @@
+{
+  "format": "bridge-simulator-bridge",
+  "version": 2,
+  "levelFingerprint": "d78839dbcddfbca7f4900fff242b5c9a7306acd9f249e09b7272526638deec17",
+  "cost": 15647.0,
+  "joints": [
+    {
+      "x": 63.15603303688267,
+      "y": 33.40868470655913,
+      "fixed": false,
+      "uuid": "001a2a97-f742-4940-a9f2-8e1acde3ebd7"
+    },
+    {
+      "x": 65.34375,
+      "y": 30.8125,
+      "fixed": true,
+      "uuid": "12b024d0-dc9a-4f6d-9947-bcbd2101ce7a"
+    },
+    {
+      "x": 49.1545763721239,
+      "y": 33.834744341930595,
+      "fixed": false,
+      "uuid": "1e28d9c7-2090-4d0c-a916-67d01eb598ae"
+    },
+    {
+      "x": 63.59375,
+      "y": 26.4375,
+      "fixed": true,
+      "uuid": "74ccb86b-93ad-4203-be97-ea556e55c50a"
+    },
+    {
+      "x": 45.44211981519019,
+      "y": 27.41375889353103,
+      "fixed": false,
+      "uuid": "889d5d55-99aa-4733-92fb-b3e3a3f3cf7e"
+    },
+    {
+      "x": 35.09375,
+      "y": 26.0625,
+      "fixed": true,
+      "uuid": "91f45fcb-0a88-452b-b96e-788d23458c4f"
+    },
+    {
+      "x": 33.96875,
+      "y": 29.9375,
+      "fixed": true,
+      "uuid": "9615a093-a025-4511-ad4f-c9b8c895382f"
+    },
+    {
+      "x": 42.58289224634065,
+      "y": 29.393189151283128,
+      "fixed": false,
+      "uuid": "b7bb66c0-6025-407f-bcb2-78595ebca6fa"
+    },
+    {
+      "x": 61.04307987216412,
+      "y": 32.424808411970886,
+      "fixed": false,
+      "uuid": "69a4ef53-17a3-4fca-9693-f55cb36d4739"
+    },
+    {
+      "x": 68.98593007331894,
+      "y": 19.258406359427145,
+      "fixed": false,
+      "uuid": "c6fd84bf-535c-4f55-9307-e197fa36022d"
+    }
+  ],
+  "edges": [
+    {
+      "from": 4,
+      "to": 7,
+      "material": "ASPHALT",
+      "uuid": "121803d4-e580-4dbc-be96-8fcc5fc36a36",
+      "from_uuid": "889d5d55-99aa-4733-92fb-b3e3a3f3cf7e",
+      "to_uuid": "b7bb66c0-6025-407f-bcb2-78595ebca6fa"
+    },
+    {
+      "from": 5,
+      "to": 7,
+      "material": "ASPHALT",
+      "uuid": "46821925-7b1d-4f1e-a89e-bd3406e950b7",
+      "from_uuid": "91f45fcb-0a88-452b-b96e-788d23458c4f",
+      "to_uuid": "b7bb66c0-6025-407f-bcb2-78595ebca6fa"
+    },
+    {
+      "from": 0,
+      "to": 1,
+      "material": "ASPHALT",
+      "uuid": "9c171541-278e-49ec-904f-92c7195dc968",
+      "from_uuid": "001a2a97-f742-4940-a9f2-8e1acde3ebd7",
+      "to_uuid": "12b024d0-dc9a-4f6d-9947-bcbd2101ce7a"
+    },
+    {
+      "from": 2,
+      "to": 7,
+      "material": "ASPHALT",
+      "uuid": "a267e5fb-d45d-4655-996b-7a03fe9b529a",
+      "from_uuid": "1e28d9c7-2090-4d0c-a916-67d01eb598ae",
+      "to_uuid": "b7bb66c0-6025-407f-bcb2-78595ebca6fa"
+    },
+    {
+      "from": 2,
+      "to": 4,
+      "material": "ASPHALT",
+      "uuid": "ad33fbe2-e732-40b8-ab2b-14e450443830",
+      "from_uuid": "1e28d9c7-2090-4d0c-a916-67d01eb598ae",
+      "to_uuid": "889d5d55-99aa-4733-92fb-b3e3a3f3cf7e"
+    },
+    {
+      "from": 0,
+      "to": 8,
+      "material": "ASPHALT",
+      "uuid": "198c8dde-e03e-499f-9a4a-8b2bbde99fa9",
+      "from_uuid": "001a2a97-f742-4940-a9f2-8e1acde3ebd7",
+      "to_uuid": "69a4ef53-17a3-4fca-9693-f55cb36d4739"
+    },
+    {
+      "from": 3,
+      "to": 9,
+      "material": "ASPHALT",
+      "uuid": "ebd61c36-50b8-44b2-a7b3-a97627622f3b",
+      "from_uuid": "74ccb86b-93ad-4203-be97-ea556e55c50a",
+      "to_uuid": "c6fd84bf-535c-4f55-9307-e197fa36022d"
+    }
+  ]
+}

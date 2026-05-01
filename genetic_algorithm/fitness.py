@@ -14,9 +14,10 @@ W_COST = 700.0
 W_TIME = 0.0
 
 # Event penalties (scaled by (1 - progress))
-PENALTY_CRASH = 2000.0
-PENALTY_FALL = 2000.0
-PENALTY_STUCK = 2000.0
+PENALTY_CRASH = 1000.0
+PENALTY_FALL = 1000.0
+PENALTY_STUCK = 1000.0
+PENALTY_MAX_STEPS = 1500.0
 
 _BEAM_MAX_LENGTH_FOR_PRICING = 8.0  # must match bridge.physics.beams.Beam.MAX_LENGTH
 _MATERIAL_UNIT_PRICE: dict[str, int] = {
@@ -77,7 +78,7 @@ def _recompute_cost_inplace(genome: Genome) -> float:
     return float(total)
 
 
-def evaluate_fitness(genome: Genome, level_name: str = "01"):
+def evaluate_fitness(genome: Genome, level_name: str = "01", fail_streak: int = 0):
     temp_path = None
     output_path = None
 
@@ -138,6 +139,7 @@ def evaluate_fitness(genome: Genome, level_name: str = "01"):
         if max_steps <= 0:
             max_steps = DEFAULT_MAX_STEPS
 
+        reached_max_steps = bool(output.get("endReason") == "max_steps")
         # Keep cost consistent with current topology so selection can prune edges.
         _recompute_cost_inplace(genome)
 
@@ -145,7 +147,8 @@ def evaluate_fitness(genome: Genome, level_name: str = "01"):
         p = max(0.0, min(1.0, progress))
         c = float(getattr(genome, "cost", 0.0)) / float(MAX_COST)
         t = min(1.0, float(timesteps) / float(max_steps))
-
+        if fail_streak > 10:
+            c = 0.0
 
         fitness = (W_PROGRESS * p) - (W_COST * c) - (W_TIME * t)
 
@@ -155,6 +158,11 @@ def evaluate_fitness(genome: Genome, level_name: str = "01"):
             fitness -= PENALTY_CRASH * (1.5 - p)
         elif stuck:
             fitness -= PENALTY_STUCK * (1.5 - p)
+        elif reached_max_steps:
+            fitness -= PENALTY_MAX_STEPS * (1.5 - p)
+
+
+
 
         genome.progress = progress
         genome.fitness = fitness

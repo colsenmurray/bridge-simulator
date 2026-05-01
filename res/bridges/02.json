@@ -2,20 +2,13 @@
   "format": "bridge-simulator-bridge",
   "version": 2,
   "levelFingerprint": "d78839dbcddfbca7f4900fff242b5c9a7306acd9f249e09b7272526638deec17",
-  "cost": 11770,
+  "cost": 0,
   "joints": [
-    { "x": 33.96875, "y": 29.9375, "fixed": true, "uuid": "ac7374ad-d7a1-4ab9-8951-4babb5f9ebb3" },
-    { "x": 35.09375, "y": 26.0625, "fixed": true, "uuid": "1099ce10-c664-40c5-90c0-20b077816ffa" },
-    { "x": 63.59375, "y": 26.4375, "fixed": true, "uuid": "24480d3b-e746-4c5b-a33f-8d9e3d000ae8" },
-    { "x": 65.34375, "y": 30.8125, "fixed": true, "uuid": "cc5c0843-60e8-4f39-82eb-6e1ead269f57" },
-    { "x": 41.965603, "y": 30.161844, "fixed": false, "uuid": "73ec83b8-8017-44b6-bc02-8eda69052ba2" },
-    { "x": 49.962456, "y": 30.386189, "fixed": false, "uuid": "d620fad4-cedf-4d01-b1d4-7e4aa5ce9640" },
-    { "x": 57.95931, "y": 30.61053, "fixed": false, "uuid": "3eccb983-54db-4da8-8b0d-5c63191fc40d" }
+    { "x": 33.96875, "y": 29.9375, "fixed": true, "uuid": "9615a093-a025-4511-ad4f-c9b8c895382f" },
+    { "x": 35.09375, "y": 26.0625, "fixed": true, "uuid": "91f45fcb-0a88-452b-b96e-788d23458c4f" },
+    { "x": 63.59375, "y": 26.4375, "fixed": true, "uuid": "74ccb86b-93ad-4203-be97-ea556e55c50a" },
+    { "x": 65.34375, "y": 30.8125, "fixed": true, "uuid": "12b024d0-dc9a-4f6d-9947-bcbd2101ce7a" }
   ],
   "edges": [
-    { "from": 0, "to": 4, "material": "ASPHALT", "uuid": "f2777732-49e7-4c61-83ee-4566515c2130", "from_uuid": "ac7374ad-d7a1-4ab9-8951-4babb5f9ebb3", "to_uuid": "73ec83b8-8017-44b6-bc02-8eda69052ba2" },
-    { "from": 4, "to": 5, "material": "ASPHALT", "uuid": "839b9970-c6f6-459c-b81d-c8145a6ef5b4", "from_uuid": "73ec83b8-8017-44b6-bc02-8eda69052ba2", "to_uuid": "d620fad4-cedf-4d01-b1d4-7e4aa5ce9640" },
-    { "from": 5, "to": 6, "material": "ASPHALT", "uuid": "ac855fc5-96ca-49c0-af9f-f4455b8dec29", "from_uuid": "d620fad4-cedf-4d01-b1d4-7e4aa5ce9640", "to_uuid": "3eccb983-54db-4da8-8b0d-5c63191fc40d" },
-    { "from": 6, "to": 3, "material": "ASPHALT", "uuid": "d9bafef5-b0b6-478f-990b-154d53e15865", "from_uuid": "3eccb983-54db-4da8-8b0d-5c63191fc40d", "to_uuid": "cc5c0843-60e8-4f39-82eb-6e1ead269f57" }
   ]
 }

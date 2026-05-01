@@ -20,6 +20,7 @@ import org.jbox2d.dynamics.World;
 import org.jbox2d.dynamics.joints.RevoluteJoint;
 import org.jbox2d.dynamics.joints.RevoluteJointDef;
 
+import bridge.physics.FixtureUserData;
 import bridge.physics.PhysicsObject;
 import bridge.physics.car.Car;
 import bridge.physics.environment.RiverBank;
@@ -250,6 +251,7 @@ public abstract class Beam extends PhysicsObject {
         }
         fixtureDef.shape = shape;
         fixture = body.createFixture(fixtureDef);
+        fixture.setUserData(FixtureUserData.BRIDGE_BEAM);
     }
 
     public void activatePhysics() {

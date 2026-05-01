@@ -46,6 +46,8 @@ class Evolution:
         self.fail_streak = 0
         self.population = self.initialize_population()
 
+    
+
     def _write_hyperparameters(self) -> None:
         payload = {
             "run_metadata": {
@@ -112,15 +114,17 @@ class Evolution:
         max_workers = min(len(self.population), (os.cpu_count() or 4))
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
             future_to_individual = {
-                ex.submit(evaluate_fitness, individual, self.config.level): individual
+                ex.submit(evaluate_fitness, individual, self.config.level, self.fail_streak): individual
                 for individual in self.population
             }
             for fut in as_completed(future_to_individual):
                 individual = future_to_individual[fut]
                 fitness = fut.result()
                 individual.fitness = fitness
+
                 total += float(fitness)
                 best_in_pop = max(best_in_pop, float(fitness))
+
                 if fitness > self.best_fitness:
                     self.best_fitness = fitness
                     self.best_individual = individual
@@ -131,6 +135,9 @@ class Evolution:
             self.fail_streak += 1
         else:
             self.fail_streak = 0
+            fitness = evaluate_fitness(self.best_individual, self.config.level, self.fail_streak)
+            self.best_fitness = fitness
+
         return best_in_pop, avg
 
     def evolve_population(self):
@@ -152,7 +159,7 @@ class Evolution:
             p2_clone = p2.clone()
             
             if len(next_pop) >= int(self.config.population_size * 0.9):
-                mutations_count = random.randint(0, (self.fail_streak + 10))
+                mutations_count = random.randint(0, ((self.fail_streak*2) + 10))
                 for _ in range(mutations_count):
                     if random.random() < float(self.config.mutation_rate):
                         p1_clone = mutate(p1_clone, self.fail_streak)
@@ -196,6 +203,7 @@ class Evolution:
         )
 
         for generation in range(self.config.generations):
+            print(f"--------------------------------")
             self.generation += 1
             self.population = self.evolve_population()
             best_in_pop, avg = self.evaluate_population()
@@ -206,10 +214,11 @@ class Evolution:
                 float(self.best_fitness),
             )
             # Track best individual seen so far (already maintained in evaluate_population)
-            print(f"[evolution] --------------------------------")
             print(f"[evolution] End Reason: {self.best_individual.end_reason}")
             print(f"[evolution] Progress: {self.best_individual.progress}")
             print(f"[evolution] generation {generation+1}/{self.config.generations}")
             print(f"[evolution] global_best={float(self.best_fitness):.3f}")
+            print(f"[evolution] Fail Streak: {self.fail_streak}")
+            print(f"--------------------------------")
 
         return self.best_individual

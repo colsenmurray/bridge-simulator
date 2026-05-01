@@ -1,5 +1,5 @@
 run_metadata:
-  started_at_utc: '2026-04-30T22:58:18.026936+00:00'
+  started_at_utc: '2026-04-30T23:10:25.902034+00:00'
   config_file: /home/ashtondy/School/cs/cs420/bridge-simulator/genetic_algorithm/configs/base_config.yml
 genetic_algorithm:
   population_size: 30
@@ -9,8 +9,8 @@ genetic_algorithm:
   tournament_size: 5
   elitism: 2
   seed: 42
-  level: 09
-  initial_individual: res/bridges/09.json
+  level: '01'
+  initial_individual: res/bridges/01.json
 fitness:
   MAX_COST: 30000
   DEFAULT_MAX_STEPS: 1000

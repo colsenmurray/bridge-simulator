@@ -10,6 +10,8 @@ public final class FixtureUserData {
     public static final Object PIT_TERRAIN = new Object();
     public static final Object CAR_BODY = new Object();
     public static final Object CAR_WHEEL = new Object();
+    /** Bridge beam (asphalt/wood/steel); used to ignore car support on pit debris. */
+    public static final Object BRIDGE_BEAM = new Object();
 
     private FixtureUserData() {
     }

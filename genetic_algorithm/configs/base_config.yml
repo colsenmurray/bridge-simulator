@@ -1,5 +1,5 @@
 population_size: 30
-generations: 1000
+generations: 10000
 crossover_rate: 0.4
 mutation_rate: 0.5
 tournament_size: 5
