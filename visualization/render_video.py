@@ -1,6 +1,8 @@
 """
 Render an MP4 stepping through best_individual_<gen>.json snapshots in an output folder.
 
+Also writes bridge_first.png and bridge_last.png (lowest / highest generation snapshots).
+
 Static matplotlib render (terrain + bridge) matching simulator world coords and palette.
 """
 
@@ -247,17 +249,20 @@ def render_frame(
 
 def render_learning_video(
     output_folder: str | Path,
-    output_video: str | Path,
+    output_video: Optional[str | Path] = None,
     *,
     fps: float = 2.0,
     level: Optional[str] = None,
     pixel_width: int = 960,
     pixel_height: int = 540,
-) -> Path:
+) -> tuple[Path, Path, Path]:
     out_dir = Path(output_folder).expanduser().resolve()
-    vid_path = Path(output_video).expanduser()
-    if not vid_path.is_absolute():
-        vid_path = (Path.cwd() / vid_path).resolve()
+    if output_video is None:
+        vid_path = out_dir / "learning.mp4"
+    else:
+        vid_path = Path(output_video).expanduser()
+        if not vid_path.is_absolute():
+            vid_path = (Path.cwd() / vid_path).resolve()
 
     if level is None:
         level = load_level_from_hyperparameters(out_dir)
@@ -267,7 +272,7 @@ def render_learning_video(
     if not snapshots:
         raise FileNotFoundError(f"No best_individual_*.json files in {out_dir}")
 
-    frames: list[np.ndarray] = []
+    raw_frames: list[np.ndarray] = []
     for gen, json_path in snapshots:
         bridge = load_bridge(json_path)
         joints = list(bridge.get("joints") or [])
@@ -284,8 +289,14 @@ def render_learning_video(
             pixel_width=pixel_width,
             pixel_height=pixel_height,
         )
-        frames.append(pad_frame_to_macro_block(frame))
+        raw_frames.append(frame)
 
+    first_png = out_dir / "bridge_first.png"
+    last_png = out_dir / "bridge_last.png"
+    iio.imwrite(str(first_png), raw_frames[0])
+    iio.imwrite(str(last_png), raw_frames[-1])
+
+    frames = [pad_frame_to_macro_block(f) for f in raw_frames]
     vid_path.parent.mkdir(parents=True, exist_ok=True)
     iio.imwrite(
         str(vid_path),
@@ -293,7 +304,7 @@ def render_learning_video(
         fps=fps,
         codec="libx264",
     )
-    return vid_path
+    return vid_path, first_png, last_png
 
 
 def main() -> None:
@@ -309,8 +320,8 @@ def main() -> None:
     parser.add_argument(
         "--output_video",
         type=str,
-        required=True,
-        help="Path to write MP4 (e.g. output_9_4_final/learning.mp4)",
+        default=None,
+        help="Path to write MP4 (default: <output_folder>/learning.mp4)",
     )
     parser.add_argument("--fps", type=float, default=2.0, help="Frames per second (default 2)")
     parser.add_argument(
@@ -323,7 +334,7 @@ def main() -> None:
     parser.add_argument("--height", type=int, default=540, help="Frame height in pixels")
     args = parser.parse_args()
 
-    path = render_learning_video(
+    video_path, first_png, last_png = render_learning_video(
         args.output_folder,
         args.output_video,
         fps=args.fps,
@@ -331,7 +342,9 @@ def main() -> None:
         pixel_width=args.width,
         pixel_height=args.height,
     )
-    print(f"Wrote {path}")
+    print(f"Wrote {video_path}")
+    print(f"Wrote {first_png}")
+    print(f"Wrote {last_png}")
 
 
 if __name__ == "__main__":
