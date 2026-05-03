@@ -84,3 +84,16 @@ On success, the absolute path of the new JSON file is printed to standard output
 ## Demo
 
 [screencast](https://user-images.githubusercontent.com/32977249/201428102-d889df1f-99a6-46f5-9da4-680b92a400e5.webm)
+
+## Genetic algorithm — learning video
+
+After a GA run writes `best_individual_<generation>.json` snapshots under an output folder, you can turn them into an MP4 (static render of each bridge over terrain, 2 FPS by default):
+
+```bash
+uv run python -m visualization.render_video \
+  --output_folder output_9_4_final \
+  --output_video output_9_4_final/learning.mp4 \
+  --fps 2
+```
+
+Level for terrain is read from `hyperparameters.yml` unless you pass `--level`. Optional: `--width`, `--height`.

@@ -11,6 +11,9 @@ public class Main {
         if (args.length > 0 && "--headless".equals(args[0])) {
             System.exit(HeadlessSimulation.run(args));
         }
+        if (args.length > 0 && "--dump-terrain".equals(args[0])) {
+            System.exit(DumpLevelTerrain.run(args));
+        }
         MainFrame.setLookAndFeel();
         new MainFrame();
     }

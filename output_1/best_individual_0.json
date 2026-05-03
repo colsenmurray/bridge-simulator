@@ -2,7 +2,7 @@
   "format": "bridge-simulator-bridge",
   "version": 2,
   "levelFingerprint": "eb8f1fcdd9ae80ea23c3141c134f6f4acb3d3a154240d76a80c19f3a0c7e9930",
-  "cost": 1568.0,
+  "cost": 0.0,
   "joints": [
     {
       "x": 39.34375,
@@ -21,22 +21,7 @@
       "y": 31.25,
       "fixed": true,
       "uuid": "ca7d5a9f-10a9-4f4d-a018-c52f77d9ab16"
-    },
-    {
-      "x": 47.974296806905066,
-      "y": 28.649287029911996,
-      "fixed": false,
-      "uuid": "c2aff0e6-37ff-4ce4-91ec-11f352215d26"
     }
   ],
-  "edges": [
-    {
-      "from": 1,
-      "to": 3,
-      "material": "ASPHALT",
-      "uuid": "43abc5cb-3572-414d-9ca0-f45e7378684c",
-      "from_uuid": "583d566e-0b38-4a6b-9f83-6b814a589260",
-      "to_uuid": "c2aff0e6-37ff-4ce4-91ec-11f352215d26"
-    }
-  ]
+  "edges": []
 }

@@ -7,6 +7,7 @@ import random
 import argparse
 
 from genetic_algorithm.genome import Genome
+from genetic_algorithm.terrain import repair_mutable_joints_out_of_terrain
 
 @dataclass(frozen=True)
 class _ParentEdge:
@@ -53,7 +54,7 @@ def _nearest_joint_index(child_joints: list[dict[str, Any]], target_joint: dict[
 
 
 
-def crossover(parent1: Genome, parent2: Genome) -> Genome:
+def crossover(parent1: Genome, parent2: Genome, level: str | None = None) -> Genome:
     # Order parents by fitness (fitter first)
     fitter_parent, other_parent = (parent1, parent2) if parent1.fitness >= parent2.fitness else (parent2, parent1)
 
@@ -173,6 +174,8 @@ def crossover(parent1: Genome, parent2: Genome) -> Genome:
     Genome.prune_components_without_fixed_anchor_inplace(child.bridge)
     child.joints = child.bridge.get("joints", [])
     child.edges = child.bridge.get("edges", [])
+    repair_mutable_joints_out_of_terrain(child.bridge, level)
+    child.joints = child.bridge.get("joints", [])
     child.validate_bridge()
     return child
 

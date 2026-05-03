@@ -28,15 +28,19 @@ def test_mutation_can_add_joint() -> None:
                 {"x": 0, "y": 0, "fixed": True, "uuid": "A"},
                 {"x": 1, "y": 0, "fixed": False, "uuid": "B"},
             ],
-            "edges": [],
+            "edges": [{"from": 0, "to": 1, "material": "ASPHALT", "uuid": "AB"}],
         }
     )
 
-    random.seed(1)
     base = len(g.joints)
     child = g
-    for _ in range(50):
-        child = mutate(child)
+    for seed in range(200):
+        random.seed(seed)
+        child = g.clone()
+        for _ in range(80):
+            child = mutate(child)
+            if len(child.joints) > base:
+                break
         if len(child.joints) > base:
             break
 

@@ -1,0 +1,50 @@
+{
+  "format": "bridge-simulator-bridge",
+  "version": 2,
+  "levelFingerprint": "eb8f1fcdd9ae80ea23c3141c134f6f4acb3d3a154240d76a80c19f3a0c7e9930",
+  "cost": 5229.0,
+  "joints": [
+    {
+      "x": 39.34375,
+      "y": 30.0,
+      "fixed": true,
+      "uuid": "4a2bd376-fdb4-46ea-a810-b2433836a2ae"
+    },
+    {
+      "x": 51.15625,
+      "y": 25.9375,
+      "fixed": true,
+      "uuid": "583d566e-0b38-4a6b-9f83-6b814a589260"
+    },
+    {
+      "x": 60.84375,
+      "y": 31.25,
+      "fixed": true,
+      "uuid": "ca7d5a9f-10a9-4f4d-a018-c52f77d9ab16"
+    },
+    {
+      "x": 50.676168057848365,
+      "y": 32.75772638808677,
+      "fixed": false,
+      "uuid": "df8fd750-a88c-4b06-b181-3a53ef2d0f7f"
+    }
+  ],
+  "edges": [
+    {
+      "from": 0,
+      "to": 3,
+      "material": "ASPHALT",
+      "uuid": "16730718-e6c8-4df0-9519-61f8e2663ff9",
+      "from_uuid": "4a2bd376-fdb4-46ea-a810-b2433836a2ae",
+      "to_uuid": "df8fd750-a88c-4b06-b181-3a53ef2d0f7f"
+    },
+    {
+      "from": 1,
+      "to": 3,
+      "material": "WOOD",
+      "uuid": "0a693aac-9952-4646-b4cb-667ca6948bcc",
+      "from_uuid": "583d566e-0b38-4a6b-9f83-6b814a589260",
+      "to_uuid": "df8fd750-a88c-4b06-b181-3a53ef2d0f7f"
+    }
+  ]
+}

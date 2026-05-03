@@ -1,0 +1,56 @@
+{
+  "format": "bridge-simulator-bridge",
+  "version": 2,
+  "levelFingerprint": "05b947349cb5bb548485fb4263668304bd5e2a2bad7ee47cc4519dc2be7d73e3",
+  "cost": 5600.0,
+  "joints": [
+    {
+      "x": 32.9375,
+      "y": 36.375,
+      "fixed": true,
+      "uuid": "14e0b80e-dde1-446e-9a88-9d55e649562a"
+    },
+    {
+      "x": 41.0,
+      "y": 22.25,
+      "fixed": true,
+      "uuid": "5ce114e6-af67-457b-9ab2-91ecd65174bc"
+    },
+    {
+      "x": 67.1875,
+      "y": 24.5,
+      "fixed": true,
+      "uuid": "65cb0e3a-b698-4117-ab18-efe81df42b11"
+    },
+    {
+      "x": 34.81256335871706,
+      "y": 35.38618599016271,
+      "fixed": false,
+      "uuid": "8a49a10f-c5e9-4d3a-97c0-b90ac8fb819c"
+    },
+    {
+      "x": 39.64474540293933,
+      "y": 29.210093435584056,
+      "fixed": false,
+      "uuid": "db85ee89-48c8-436e-bbf9-04b35027b762"
+    }
+  ],
+  "edges": [
+    {
+      "from": 1,
+      "to": 4,
+      "material": "ASPHALT",
+      "uuid": "ec484006-d96b-4f4d-8d1c-b44fd6cd33b1",
+      "from_uuid": "5ce114e6-af67-457b-9ab2-91ecd65174bc",
+      "to_uuid": "db85ee89-48c8-436e-bbf9-04b35027b762"
+    },
+    {
+      "from": 3,
+      "to": 4,
+      "material": "ASPHALT",
+      "uuid": "f4f632f9-eb47-403c-86a5-286feeed1e2f",
+      "from_uuid": "8a49a10f-c5e9-4d3a-97c0-b90ac8fb819c",
+      "to_uuid": "db85ee89-48c8-436e-bbf9-04b35027b762"
+    }
+  ]
+}

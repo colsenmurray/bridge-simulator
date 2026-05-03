@@ -1,9 +1,9 @@
 run_metadata:
-  started_at_utc: '2026-05-01T00:08:26.029806+00:00'
+  started_at_utc: '2026-05-01T17:40:39.040846+00:00'
   config_file: /home/ashtondy/School/cs/cs420/bridge-simulator/genetic_algorithm/configs/base_config.yml
 genetic_algorithm:
   population_size: 30
-  generations: 1000
+  generations: 10000
   crossover_rate: 0.4
   mutation_rate: 0.5
   tournament_size: 5
@@ -14,8 +14,8 @@ genetic_algorithm:
 fitness:
   MAX_COST: 30000
   DEFAULT_MAX_STEPS: 1000
-  W_PROGRESS: 600.0
-  W_COST: 700.0
+  W_PROGRESS: 1000.0
+  W_COST: 10.0
   W_TIME: 0.0
   PENALTY_CRASH: 1000.0
   PENALTY_FALL: 1000.0

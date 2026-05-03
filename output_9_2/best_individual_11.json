@@ -1,0 +1,84 @@
+{
+  "format": "bridge-simulator-bridge",
+  "version": 2,
+  "levelFingerprint": "2cdf3cab5024dafc7ead4b81e03323cfa6e2bb0a6af7d21d644e3d3cde0d0c91",
+  "cost": 12293.0,
+  "joints": [
+    {
+      "x": 13.0,
+      "y": 29.34375,
+      "fixed": true,
+      "uuid": "31a83b9c-674e-4658-9c75-8ef9f34ad2bb"
+    },
+    {
+      "x": 86.75,
+      "y": 31.15625,
+      "fixed": true,
+      "uuid": "8f9c3fd9-19f1-46a7-8c61-286a88f48083"
+    },
+    {
+      "x": 17.0625,
+      "y": 18.03125,
+      "fixed": true,
+      "uuid": "c26904d2-b0d0-49cf-b889-ee8bf9044e49"
+    },
+    {
+      "x": 82.125,
+      "y": 16.90625,
+      "fixed": true,
+      "uuid": "e736b621-a89e-481d-abd2-240e7e372b9f"
+    },
+    {
+      "x": 9.619657659878591,
+      "y": 27.15804177491701,
+      "fixed": false,
+      "uuid": "037bee3b-3868-4250-bdf9-c91cdf43aa18"
+    },
+    {
+      "x": 15.692159472201979,
+      "y": 31.874346988255358,
+      "fixed": false,
+      "uuid": "43d036b5-93b5-4744-8dbf-eee6a27b61ff"
+    },
+    {
+      "x": 22.856408330475965,
+      "y": 37.92747947644206,
+      "fixed": false,
+      "uuid": "574dda6f-a8e5-432a-938a-746a1c839abf"
+    }
+  ],
+  "edges": [
+    {
+      "from": 5,
+      "to": 6,
+      "material": "ASPHALT",
+      "uuid": "57557546-7202-44ac-8b7a-a61332c332fa",
+      "from_uuid": "43d036b5-93b5-4744-8dbf-eee6a27b61ff",
+      "to_uuid": "574dda6f-a8e5-432a-938a-746a1c839abf"
+    },
+    {
+      "from": 4,
+      "to": 5,
+      "material": "ASPHALT",
+      "uuid": "83353f9a-910d-45b7-a61f-ecc8dfe914a3",
+      "from_uuid": "037bee3b-3868-4250-bdf9-c91cdf43aa18",
+      "to_uuid": "43d036b5-93b5-4744-8dbf-eee6a27b61ff"
+    },
+    {
+      "from": 0,
+      "to": 5,
+      "material": "ASPHALT",
+      "uuid": "90105bd1-04b1-489e-b0e5-e05f8113dcb4",
+      "from_uuid": "31a83b9c-674e-4658-9c75-8ef9f34ad2bb",
+      "to_uuid": "43d036b5-93b5-4744-8dbf-eee6a27b61ff"
+    },
+    {
+      "from": 0,
+      "to": 2,
+      "material": "ASPHALT",
+      "uuid": "a7a57456-b0fa-4467-9198-b0d601bf7542",
+      "from_uuid": "31a83b9c-674e-4658-9c75-8ef9f34ad2bb",
+      "to_uuid": "c26904d2-b0d0-49cf-b889-ee8bf9044e49"
+    }
+  ]
+}

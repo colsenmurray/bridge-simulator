@@ -1,4 +1,5 @@
 import json
+import math
 import os
 from types import SimpleNamespace
 
@@ -17,6 +18,7 @@ def test_fitness_evaluate_sets_progress_and_cleans_temp_files(monkeypatch, tmp_p
                 "fell": False,
                 "timestepsRun": 2,
                 "maxTimesteps": 500,
+                "endReason": "running",
             }
         )
     )
@@ -61,7 +63,10 @@ def test_fitness_evaluate_sets_progress_and_cleans_temp_files(monkeypatch, tmp_p
     )
     result = fitness.evaluate(g)
 
-    assert result == g.fitness
+    p = 0.75
+    expected = fitness.W_PROGRESS * p
+    assert math.isclose(result, expected)
+    assert math.isclose(g.fitness, expected)
     assert g.progress == 0.75
     # evaluate() should delete both temp bridge file and simulation output file.
     assert created["temp_path"] is not None

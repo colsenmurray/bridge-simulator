@@ -96,10 +96,11 @@ class Evolution:
         print(f"[evolution] init population size={self.config.population_size} from={self.config.initial_individual}")
         initial_individual = Genome(bridge_json_path=self.config.initial_individual)
         pop = []
-        for _ in range(self.config.population_size):
+        pop.append(initial_individual.clone())
+        for _ in range(self.config.population_size - 1):
             child = initial_individual.clone()
             for _ in range(10):
-                child = mutate(child, self.fail_streak)
+                child = mutate(child, self.fail_streak, self.config.level)
             pop.append(child)
         print(f"[evolution] init done joints={len(pop[0].joints)} edges={len(pop[0].edges)}")
         return pop
@@ -134,9 +135,10 @@ class Evolution:
         if self.best_individual.end_reason == "stuck" or self.best_individual.end_reason == "crash" or self.best_individual.end_reason == "fell":
             self.fail_streak += 1
         else:
+            if self.fail_streak > 10:
+                fitness = evaluate_fitness(self.best_individual, self.config.level, 0)
+                self.best_fitness = fitness
             self.fail_streak = 0
-            fitness = evaluate_fitness(self.best_individual, self.config.level, self.fail_streak)
-            self.best_fitness = fitness
 
         return best_in_pop, avg
 
@@ -162,18 +164,18 @@ class Evolution:
                 mutations_count = random.randint(0, ((self.fail_streak*2) + 10))
                 for _ in range(mutations_count):
                     if random.random() < float(self.config.mutation_rate):
-                        p1_clone = mutate(p1_clone, self.fail_streak)
-                        p2_clone = mutate(p2_clone, self.fail_streak)
+                        p1_clone = mutate(p1_clone, self.fail_streak, self.config.level)
+                        p2_clone = mutate(p2_clone, self.fail_streak, self.config.level)
             else:
                 if random.random() < float(self.config.mutation_rate):
-                    p1_clone = mutate(p1_clone, self.fail_streak)
-                    p2_clone = mutate(p2_clone, self.fail_streak)
+                    p1_clone = mutate(p1_clone, self.fail_streak, self.config.level)
+                    p2_clone = mutate(p2_clone, self.fail_streak, self.config.level)
                     
 
 
 
             if random.random() < float(self.config.crossover_rate):
-                child = crossover(p1_clone, p2_clone)
+                child = crossover(p1_clone, p2_clone, self.config.level)
             else:
                 child = p1_clone if random.random() < 0.5 else p2_clone
 

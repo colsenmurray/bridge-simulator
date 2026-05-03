@@ -9,8 +9,8 @@ MAX_COST = 30_000
 DEFAULT_MAX_STEPS = 1000
 
 # Fitness weights (tune as needed)
-W_PROGRESS = 600.0
-W_COST = 700.0
+W_PROGRESS = 1000.0
+W_COST = 10.0
 W_TIME = 0.0
 
 # Event penalties (scaled by (1 - progress))
@@ -149,6 +149,7 @@ def evaluate_fitness(genome: Genome, level_name: str = "01", fail_streak: int = 
         t = min(1.0, float(timesteps) / float(max_steps))
         if fail_streak > 10:
             c = 0.0
+
 
         fitness = (W_PROGRESS * p) - (W_COST * c) - (W_TIME * t)
 
