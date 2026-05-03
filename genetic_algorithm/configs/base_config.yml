@@ -5,5 +5,5 @@ mutation_rate: 0.5
 tournament_size: 5
 elitism: 2
 seed: 42
-level: "09"
-initial_individual: "res/bridges/09_bulk.json"
+level: "05"
+initial_individual: "res/bridges/05_bulk.json"

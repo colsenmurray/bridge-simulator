@@ -1,0 +1,26 @@
+run_metadata:
+  started_at_utc: '2026-05-03T17:44:23.564574+00:00'
+  config_file: /home/ashtondy/School/cs/cs420/bridge-simulator/genetic_algorithm/configs/base_config.yml
+genetic_algorithm:
+  population_size: 50
+  generations: 10000
+  crossover_rate: 0.4
+  mutation_rate: 0.5
+  tournament_size: 5
+  elitism: 2
+  seed: 42
+  level: '05'
+  initial_individual: res/bridges/05_bulk.json
+fitness:
+  MAX_COST: 30000
+  DEFAULT_MAX_STEPS: 1000
+  W_PROGRESS: 1000.0
+  W_COST: 10.0
+  W_TIME: 0.0
+  PENALTY_CRASH: 1000.0
+  PENALTY_FALL: 1000.0
+  BEAM_MAX_LENGTH_FOR_PRICING: 8.0
+  MATERIAL_UNIT_PRICE:
+    WOOD: 1000
+    STEEL: 2000
+    ASPHALT: 3000
